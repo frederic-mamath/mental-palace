@@ -32,7 +32,8 @@ src/Experience/
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Island, Water, Cloud (main character), toon helpers
                     islandShape.js: the coastline shared by land, water foam and movement limits
+                    WindField.js: drives grass/flower bending from the character (push, wake, dash gust, shockwave)
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
-    Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines)
+    Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
 ```

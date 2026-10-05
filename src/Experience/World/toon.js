@@ -17,15 +17,23 @@ export function createOutlineMaterial(color = '#1a1626') {
   return new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
 }
 
-// Shared state for wind-animated materials; World updates it every frame.
-// The pusher is the character: plants around it bend away, as if pushed by its downdraft.
-// The trail lags behind the pusher, so a wake of parted plants follows it and recovers gradually.
+// Shared state for wind-animated materials, driven every frame by WindField.
+// - pusher: the character; plants around it bend away, as if pushed by its downdraft
+// - trail: lags behind the pusher, so a wake of parted plants follows it and recovers gradually
+// - shockwave: a ring of flattened plants spreading out from a point (dash take-off)
 export const windUniforms = {
   uWindTime: { value: 0 },
   uPusherPosition: { value: new THREE.Vector3(1e5, 0, 1e5) },
   uPusherTrail: { value: new THREE.Vector3(1e5, 0, 1e5) },
   uPushRadius: { value: 3.5 },
   uPushStrength: { value: 0.8 },
+  uShockwaveOrigin: { value: new THREE.Vector3(1e5, 0, 1e5) },
+  uShockwaveAge: { value: 1e5 },
+  uShockwaveSpeed: { value: 14 },
+  uShockwaveWidth: { value: 1.6 },
+  uShockwaveLifetime: { value: 0.7 },
+  uShockwaveStrength: { value: 1.2 },
+  uLeanLimit: { value: 1.2 },
 }
 
 // Sways vertices sideways, more the higher they are (0 at y = 0, full at y = `height`), like plants in the wind.
@@ -44,6 +52,13 @@ export function applyWind(material, { height = 1, amplitude = 0.1, speed = 1.6 }
         uniform vec3 uPusherTrail;
         uniform float uPushRadius;
         uniform float uPushStrength;
+        uniform vec3 uShockwaveOrigin;
+        uniform float uShockwaveAge;
+        uniform float uShockwaveSpeed;
+        uniform float uShockwaveWidth;
+        uniform float uShockwaveLifetime;
+        uniform float uShockwaveStrength;
+        uniform float uLeanLimit;
 
         // World-space offset leaning a plant at origin away from pusher and flattening it a little,
         // fading out smoothly toward the push radius
@@ -52,6 +67,18 @@ export function applyWind(material, { height = 1, amplitude = 0.1, speed = 1.6 }
           float pushDistance = length(away);
           float push = (1.0 - smoothstep(0.0, uPushRadius, pushDistance)) * strength;
           vec2 direction = away / max(pushDistance, 0.001);
+          return vec3(direction.x * push, -push * 0.6, direction.y * push);
+        }
+
+        // Same lean, but only on a thin ring that expands from the shockwave origin and fades out
+        vec3 shockwaveOffset(vec3 origin) {
+          vec2 away = origin.xz - uShockwaveOrigin.xz;
+          float waveDistance = length(away);
+          float front = uShockwaveAge * uShockwaveSpeed;
+          float ring = 1.0 - smoothstep(0.0, uShockwaveWidth, abs(waveDistance - front));
+          float fade = 1.0 - clamp(uShockwaveAge / uShockwaveLifetime, 0.0, 1.0);
+          float push = ring * fade * uShockwaveStrength;
+          vec2 direction = away / max(waveDistance, 0.001);
           return vec3(direction.x * push, -push * 0.6, direction.y * push);
         }`
       )
@@ -74,11 +101,12 @@ export function applyWind(material, { height = 1, amplitude = 0.1, speed = 1.6 }
           transformed.xz += vec2(1.0, 0.6) * gust * ${float(amplitude)} * bend;
 
           vec3 worldOffset = pushOffset(origin, uPusherPosition, uPushStrength)
-                           + pushOffset(origin, uPusherTrail, uPushStrength * 0.6);
-          // Where both overlap, cap the lean so plants don't fold into the ground
+                           + pushOffset(origin, uPusherTrail, uPushStrength * 0.6)
+                           + shockwaveOffset(origin);
+          // Where pushes overlap, cap the lean so plants don't fold into the ground
           float lean = length(worldOffset);
           if (lean > 0.0) {
-            worldOffset *= min(lean, uPushStrength * 1.2) / lean;
+            worldOffset *= min(lean, uLeanLimit) / lean;
             // Back into the plant's local space, undoing its instance rotation and scale
             transformed += inverse(mat3(placement)) * worldOffset * bend;
           }

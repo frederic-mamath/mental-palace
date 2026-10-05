@@ -1,15 +1,20 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
+import EventEmitter from '../Utils/EventEmitter.js'
 import { createGradientMap, createOutlineMaterial } from './toon.js'
 import Afterimages from './Effects/Afterimages.js'
 import DustBurst from './Effects/DustBurst.js'
 import SpeedLines from './Effects/SpeedLines.js'
+import BoomRing from './Effects/BoomRing.js'
 import { island, islandRadius } from './islandShape.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
-export default class Cloud {
+// Events: 'dashStart' (position, direction)
+export default class Cloud extends EventEmitter {
   constructor() {
+    super()
+
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -202,6 +207,7 @@ export default class Cloud {
     this.afterimages = new Afterimages({ meshes: this.puffs })
     this.dust = new DustBurst()
     this.speedLines = new SpeedLines()
+    this.boomRing = new BoomRing()
 
     this.inputs.on('actionStart', (action) => {
       if (action === 'dash') this.startDash()
@@ -225,6 +231,9 @@ export default class Cloud {
     this.dash.ghostTimer = 0.045
 
     this.dust.spawn(this.group.position, this.dash.direction)
+    // Around the lower body, so it reads as bursting from the cloud
+    this.boomRing.spawn(this.group.position.clone().setY(this.group.position.y - 0.5))
+    this.trigger('dashStart', this.group.position, this.dash.direction)
     this.speedLines.burst(this.params.dashDuration)
     this.experience.camera.kick(3)
   }
@@ -254,6 +263,7 @@ export default class Cloud {
     this.afterimages.update(delta)
     this.dust.update(delta)
     this.speedLines.update(delta)
+    this.boomRing.update(delta)
   }
 
   updateOutlineThickness() {

@@ -10,7 +10,7 @@ import Rocks from './Decor/Rocks.js'
 import Grass from './Decor/Grass.js'
 import Flowers from './Decor/Flowers.js'
 import { createRandom } from './Decor/scatter.js'
-import { windUniforms } from './toon.js'
+import WindField from './WindField.js'
 
 export default class World {
   constructor() {
@@ -32,7 +32,7 @@ export default class World {
       this.setDecor()
 
       this.cloud = new Cloud()
-      windUniforms.uPusherTrail.value.copy(this.cloud.group.position)
+      this.windField = new WindField(this.cloud)
       this.experience.camera.follow(this.cloud.group)
     })
   }
@@ -54,16 +54,11 @@ export default class World {
   }
 
   update() {
-    windUniforms.uWindTime.value = this.experience.time.elapsed
-    if (this.cloud) {
-      const position = this.cloud.group.position
-      windUniforms.uPusherPosition.value.copy(position)
-      windUniforms.uPusherTrail.value.lerp(position, 1 - Math.exp(-3 * this.experience.time.delta))
-    }
     this.water?.update()
     this.palmTrees?.update()
     this.doubleTap?.update()
     this.cloud?.update()
+    this.windField?.update()
     this.environment?.update()
   }
 }
