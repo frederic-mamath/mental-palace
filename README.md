@@ -48,5 +48,5 @@ src/Experience/
     City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
     Hobby/          hobby island (shonen, online games, FF7): zones, paths, signpost, decor
     Airplane/       AF airliner model and its flights between the two runways
-    Transport/      boarding any vehicle between islands (prompt, ring, poof, camera follow, drop-off)
+    Transport/      vehicles between islands: Route (trips, turnaround, events) and Boarding (prompt, ring, poof, camera, drop-off)
 ```

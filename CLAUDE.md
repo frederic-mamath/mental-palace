@@ -22,7 +22,7 @@ Existing systems (all under `src/Experience/World/` unless noted):
 | --- | --- |
 | Islands (`islands.js`) | adding an `IslandShape` (center, radius, harmonics, bays): land, water foam, movement limits and decor sampling follow |
 | Landmarks (`Interactions.js`) | implementing the interface documented in `Projects/DoubleTap.js` (zone, prompt anchor, focus pose, active/open/react), or `interact()` for a custom action; content in `projects.js`; camera framing via `Projects/focusPose.js` |
-| Transport (`Transport/Boarding.js`) | a route implementing `parkedAt`, `travelling`, `depart()`, `dropOff(stop)`, `'landed'` (see `Airplane/Flight.js`) plus a vehicle object and stops config |
+| Transport (`Transport/Boarding.js`, `Transport/Route.js`) | a route extending `Route` (trips of phases along a flight frame, turnaround, `'landed'`/`'arrived'`) with its own phases, `applyPose` and `dropOff(stop)` (see `Airplane/Flight.js`), plus a vehicle object and stops config for `Boarding` |
 | Colliders (`Cloud.resolveCollisions`) | pushing circles `{ position, radius }` or rectangles `{ position, axis, halfLength, halfWidth }` (optional `disabled`) into `world.colliders` |
 | Decor (`Decor/`) | Grass, Flowers, Rocks, PalmTrees with `island`, seeded `random`, `avoid`, `exclude` |
 | Effects (`Effects/`) | self-contained pooled effects (ZoneRing, HeartPop, DustBurst, Afterimages, BoomRing, SpeedLines) with `spawn`/`update` |
