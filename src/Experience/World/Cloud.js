@@ -8,8 +8,11 @@ import SpeedLines from './Effects/SpeedLines.js'
 import BoomRing from './Effects/BoomRing.js'
 import { islands } from './islands.js'
 
-// The main character: a puffy cel-shaded cloud built from overlapping spheres.
-// Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
+// The main character, the Sheeping Goat (the user's brand: sheep and goat, their Vietnamese and Cambodian
+// zodiacs, a pun on shipping, and the GOAT). A round woolly sheep built from overlapping toon puffs, with big
+// glossy eyes, golden goat horns and four stubby legs trotting on golden hooves. Each puff gets an inverted-hull
+// twin, so ink lines show on the silhouette and in the creases between puffs.
+// (The code still calls it the cloud: it started as one.)
 // Used instead of the keyboard state while movement is locked (a project is open)
 const idleActions = { forward: false, backward: false, left: false, right: false, sprint: false }
 
@@ -38,15 +41,17 @@ export default class Cloud extends EventEmitter {
       color: '#ffffff',
       outlineColor: '#1a1626',
       outlineThickness: 0.05,
-      hoverHeight: 1.6,
-      floatAmplitude: 0.15,
+      hoverHeight: 1.27, // body center above the ground, so the hooves touch it
+      floatAmplitude: 0.03, // breathing
       floatSpeed: 1.5,
+      legSwing: 0.6, // leg swing (radians) at full trot
+      stride: 0.9, // gait cycles per unit of distance walked
       speed: 4,
       sprintMultiplier: 1.8,
       acceleration: 6,
       turnSpeed: 10,
-      lean: 0.12,
-      bank: 0.06,
+      lean: 0.04,
+      bank: 0.04,
       shoreMargin: 0.8, // how far from the waterline the cloud's center must stay
       collisionRadius: 1.4,
       dashSpeed: 24,
@@ -65,6 +70,8 @@ export default class Cloud extends EventEmitter {
     this.setMaterials()
     this.setBody()
     this.setFace()
+    this.setHorns()
+    this.setLegs()
     this.setMovement()
     this.setDash()
     this.setDebug()
@@ -75,21 +82,31 @@ export default class Cloud extends EventEmitter {
       body: new THREE.MeshToonMaterial({ color: this.params.color, gradientMap: createGradientMap() }),
       outline: createOutlineMaterial(this.params.outlineColor),
       eye: new THREE.MeshBasicMaterial({ color: '#1a1626' }),
+      highlight: new THREE.MeshBasicMaterial({ color: '#ffffff' }),
+      nose: new THREE.MeshToonMaterial({ color: '#e58fa0', gradientMap: createGradientMap() }),
+      horn: new THREE.MeshToonMaterial({ color: '#d4a72c', gradientMap: createGradientMap() }),
+      ridge: new THREE.MeshToonMaterial({ color: '#8a6a1a', gradientMap: createGradientMap() }),
     }
   }
 
   setBody() {
-    // [x, y, z, radius]
+    // A round woolly body, a little longer front (+z) to back than wide: [x, y, z, radius]
     const puffs = [
-      [0, 0, 0, 1],
-      [0.9, -0.15, 0, 0.75],
-      [-0.9, -0.15, 0, 0.75],
-      [0.45, 0.45, 0.1, 0.7],
-      [-0.4, 0.5, -0.1, 0.65],
-      [0, -0.1, 0.55, 0.7],
-      [0, -0.1, -0.55, 0.7],
-      [1.5, -0.3, 0.1, 0.45],
-      [-1.5, -0.3, -0.1, 0.45],
+      [0, 0, 0, 1], // core
+      [0, 0.08, 0.55, 0.85], // face
+      [0, 0, -0.6, 0.85], // rump
+      [0.6, -0.05, 0.25, 0.7],
+      [-0.6, -0.05, 0.25, 0.7],
+      [0.6, -0.05, -0.35, 0.7],
+      [-0.6, -0.05, -0.35, 0.7],
+      [0, 0.55, 0.15, 0.6], // back of the head
+      [0.35, 0.45, -0.35, 0.55],
+      [-0.35, 0.45, -0.3, 0.55],
+      [0, -0.35, 0, 0.72], // belly
+      [0, 0.2, -1.25, 0.32], // tail
+      [0, 0.95, 0.5, 0.28], // forehead tuft
+      [0.2, 0.88, 0.38, 0.22],
+      [-0.2, 0.88, 0.4, 0.22],
     ]
 
     this.geometry = new THREE.IcosahedronGeometry(1, 5)
@@ -116,18 +133,106 @@ export default class Cloud extends EventEmitter {
     this.group.add(this.body)
   }
 
+  // Big glossy eyes on the face puff (each with a white highlight) and a small pink nose
   setFace() {
     this.face = new THREE.Group()
+    this.eyes = []
 
-    const eyeGeometry = new THREE.SphereGeometry(1, 16, 16)
+    const sphere = new THREE.SphereGeometry(1, 20, 16)
     for (const side of [-1, 1]) {
-      const eye = new THREE.Mesh(eyeGeometry, this.materials.eye)
-      eye.position.set(0.22 * side, 0.05, 1.17)
-      eye.scale.set(0.07, 0.12, 0.05)
+      const eye = new THREE.Group()
+      eye.position.set(0.33 * side, 0.28, 1.3)
+      const ball = new THREE.Mesh(sphere, this.materials.eye)
+      ball.scale.set(0.17, 0.19, 0.1)
+      const highlight = new THREE.Mesh(sphere, this.materials.highlight)
+      highlight.scale.setScalar(0.05)
+      // Same corner on both eyes (upper left as seen from the front), like one light catching them
+      highlight.position.set(-0.05, 0.07, 0.08)
+      eye.add(ball, highlight)
       this.face.add(eye)
+      this.eyes.push(eye)
     }
 
+    const nose = new THREE.Mesh(sphere, this.materials.nose)
+    nose.scale.set(0.09, 0.06, 0.05)
+    nose.position.set(0, 0.03, 1.39)
+    this.face.add(nose)
+
     this.body.add(this.face)
+    this.nextBlink = 2
+  }
+
+  // Golden goat horns curling back and down from the top of the head, tapering, with darker ridges
+  setHorns() {
+    const tubular = 32
+    const radial = 10
+    const radiusAt = (t) => THREE.MathUtils.lerp(0.17, 0.035, Math.pow(t, 0.8))
+    // A tube along `curve` whose radius follows radiusAt (+ grow, for the outline)
+    const createHorn = (curve, grow) => {
+      const geometry = new THREE.TubeGeometry(curve, tubular, 1, radial, false)
+      const position = geometry.attributes.position
+      const center = new THREE.Vector3()
+      const point = new THREE.Vector3()
+      for (let i = 0; i < position.count; i++) {
+        const ring = Math.floor(i / (radial + 1))
+        const t = ring / tubular
+        curve.getPointAt(t, center)
+        point.fromBufferAttribute(position, i).sub(center).multiplyScalar(radiusAt(t) + grow).add(center)
+        position.setXYZ(i, point.x, point.y, point.z)
+      }
+      geometry.computeVertexNormals()
+      return geometry
+    }
+
+    for (const side of [-1, 1]) {
+      const curve = new THREE.CatmullRomCurve3(
+        [[0, 0, 0], [0.25, 0.3, -0.05], [0.55, 0.38, -0.3], [0.8, 0.2, -0.5], [0.92, -0.1, -0.42], [0.85, -0.32, -0.2]].map(
+          ([x, y, z]) => new THREE.Vector3(x * side, y, z)
+        )
+      )
+      const horn = new THREE.Group()
+      horn.position.set(0.55 * side, 0.6, 0.62)
+      horn.add(new THREE.Mesh(createHorn(curve, 0), this.materials.horn))
+      horn.add(new THREE.Mesh(createHorn(curve, 0.035), this.materials.outline))
+      // Ridges: thin dark rings around the horn
+      for (const t of [0.22, 0.45, 0.66]) {
+        const ridge = new THREE.Mesh(new THREE.TorusGeometry(radiusAt(t), 0.022, 6, 18), this.materials.ridge)
+        curve.getPointAt(t, ridge.position)
+        ridge.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), curve.getTangentAt(t))
+        horn.add(ridge)
+      }
+      horn.traverse((child) => {
+        if (child.isMesh && child.material !== this.materials.outline) child.castShadow = true
+      })
+      this.body.add(horn)
+    }
+  }
+
+  // Four stubby woolly legs on golden hooves, pivoting at the hip for the trot
+  setLegs() {
+    const wool = new THREE.CylinderGeometry(0.2, 0.18, 0.55, 12).translate(0, -0.27, 0)
+    const hoof = new THREE.CylinderGeometry(0.19, 0.22, 0.2, 12).translate(0, -0.6, 0)
+    this.legs = [
+      [0.48, 0.5], // front left
+      [-0.48, 0.5], // front right
+      [0.48, -0.5], // back left
+      [-0.48, -0.5], // back right
+    ].map(([x, z], i) => {
+      const hip = new THREE.Group()
+      hip.position.set(x, -0.55, z)
+      for (const [geometry, material] of [[wool, this.materials.body], [hoof, this.materials.horn]]) {
+        const mesh = new THREE.Mesh(geometry, material)
+        mesh.castShadow = true
+        const outline = new THREE.Mesh(geometry, this.materials.outline)
+        outline.scale.set(1.2, 1.04, 1.2)
+        hip.add(mesh, outline)
+      }
+      // Diagonal pairs swing together: front left with back right, front right with back left
+      hip.userData.side = i === 0 || i === 3 ? 1 : -1
+      this.group.add(hip)
+      return hip
+    })
+    this.gait = 0
   }
 
   setMovement() {
@@ -377,7 +482,7 @@ export default class Cloud extends EventEmitter {
   setDebug() {
     if (!this.debug.active) return
 
-    const folder = this.debug.ui.addFolder('Cloud')
+    const folder = this.debug.ui.addFolder('Sheeping Goat')
     folder.addColor(this.params, 'color').onChange((value) => this.materials.body.color.set(value))
     folder.addColor(this.params, 'outlineColor').onChange((value) => this.materials.outline.color.set(value))
     folder.add(this.params, 'outlineThickness', 0, 0.2, 0.001).onChange(() => this.updateOutlineThickness())
@@ -400,14 +505,30 @@ export default class Cloud extends EventEmitter {
     this.updateMovement(this.time.delta)
     this.updateDash(this.time.delta)
 
+    const delta = this.time.delta
     const t = this.time.elapsed * this.params.floatSpeed
     const bank = THREE.MathUtils.clamp(-this.yawSpeed * this.params.bank, -0.35, 0.35)
 
-    // Idle bob, sway and breathing squash, plus leaning forward with speed and into turns
-    this.group.position.y = this.groundHeight + this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude
+    // Trot: the gait advances with the distance walked; legs swing in diagonal pairs, more the faster it
+    // goes, and the body bounces once per step
+    const speed = Math.hypot(this.velocity.x, this.velocity.z)
+    const effort = Math.min(speed / this.params.speed, 1)
+    this.gait += speed * delta * this.params.stride * Math.PI
+    const swing = Math.sin(this.gait) * this.params.legSwing * effort
+    for (const leg of this.legs) leg.rotation.x = swing * leg.userData.side
+    const bounce = Math.abs(Math.sin(this.gait)) * 0.08 * effort
+
+    // Breathing, a little sway at rest, leaning forward with speed and into turns
+    this.group.position.y = this.groundHeight + this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude + bounce
     this.group.rotation.y = this.yaw
-    this.group.rotation.x = Math.sin(t * 0.4) * 0.03 + Math.min(this.speedRatio, 1.5) * this.params.lean
-    this.group.rotation.z = Math.sin(t * 0.55) * 0.05 + bank
+    this.group.rotation.x = Math.sin(t * 0.4) * 0.015 + Math.min(this.speedRatio, 1.5) * this.params.lean
+    this.group.rotation.z = Math.sin(t * 0.55) * 0.02 + bank
+
+    // Blink every few seconds
+    this.nextBlink -= delta
+    const blinking = this.nextBlink < 0.12
+    for (const eye of this.eyes) eye.scale.y = blinking ? 0.12 : 1
+    if (this.nextBlink <= 0) this.nextBlink = 2.5 + Math.random() * 3
     // Stretch along the heading (local z) while dashing, squash when the spring overshoots below 0
     const stretch = this.stretch.value * this.params.dashStretch
     this.body.scale.set(
