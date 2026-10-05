@@ -110,7 +110,8 @@ export default class Airport {
 
   setControlTower() {
     const { start, length } = this.runway
-    const group = this.place(start + length * 0.72, -6.5)
+    // Toward the far end of the runway, leaving the near end to the Air France Industries hangar
+    const group = this.place(start + length * 0.9, -6.5)
     this.colliders.push({ position: group.position.clone(), radius: 1.4 })
     this.addCylinder(group, { radius: 0.55, height: 7, color: '#ddd7ca', radialSegments: 16 })
     this.addCylinder(group, { radius: 1.25, height: 1.2, bottom: 7, color: '#7fb6d9', radialSegments: 16 })

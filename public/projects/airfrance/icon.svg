@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- A nod to the employer: navy tile, red and white stripes, "AFI" (not the company's logo) -->
+  <rect width="128" height="128" rx="28" fill="#0b2a5b"/>
+  <path d="M0 98 L52 0 H70 L18 128 H0 Z" fill="#d6202f"/>
+  <path d="M26 128 L78 0 H90 L38 128 Z" fill="#f7f7f4"/>
+  <text x="80" y="82" text-anchor="middle" font-family="-apple-system, Helvetica Neue, Arial, sans-serif" font-size="40" font-weight="900" font-style="italic" fill="#ffffff">AFI</text>
+</svg>

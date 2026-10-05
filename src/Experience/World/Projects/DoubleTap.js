@@ -4,6 +4,7 @@ import Experience from '../../Experience.js'
 import { createGradientMap, createOutlineMaterial } from '../toon.js'
 import ZoneRing from '../Effects/ZoneRing.js'
 import HeartPop from '../Effects/HeartPop.js'
+import { focusPose } from './focusPose.js'
 
 // Project landmark: a giant cel-shaded iPhone standing on a stone pedestal, showing the Double Tap app.
 //
@@ -308,28 +309,20 @@ export default class DoubleTap {
     return this.phone.localToWorld(target.set(0, this.size.height + 0.7, 0))
   }
 
-  // Camera pose facing the screen, aimed off-center so the phone sits beside the project card:
-  // left of it on wide screens, above it on narrow ones (760px matches the card's bottom-sheet breakpoint in style.css)
-  getFocusPose({ width, height }, fov) {
-    const center = this.screen.getWorldPosition(new THREE.Vector3())
+  // Camera pose facing the screen, with the phone beside the project card
+  getFocusPose(viewport, fov) {
     const quaternion = this.screen.getWorldQuaternion(new THREE.Quaternion())
-    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion)
-    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion)
-    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion)
-
-    const narrow = width < 760
-    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(fov / 2))
-    // Distance at which the phone fills this share of the view height
-    const share = narrow ? 0.38 : 0.7
-    const distance = this.size.height / share / (2 * tanHalfFov)
-    const visibleHeight = 2 * distance * tanHalfFov
-    const visibleWidth = visibleHeight * (width / height)
-
-    const target = center.clone()
-    if (narrow) target.addScaledVector(up, -visibleHeight * 0.24)
-    else target.addScaledVector(right, visibleWidth * 0.2)
-
-    return { position: target.clone().addScaledVector(normal, distance), target }
+    return focusPose(
+      {
+        center: this.screen.getWorldPosition(new THREE.Vector3()),
+        normal: new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion),
+        right: new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion),
+        up: new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion),
+        height: this.size.height,
+      },
+      viewport,
+      fov
+    )
   }
 
   setActive(active) {

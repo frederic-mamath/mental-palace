@@ -274,7 +274,7 @@ body {
   opacity: 0.6;
 }
 
-/* Narrow screens: bottom sheet under the phone (breakpoint shared with DoubleTap.getFocusPose) */
+/* Narrow screens: bottom sheet under the landmark (breakpoint shared with Projects/focusPose.js) */
 @media (max-width: 759px) {
   .project-card {
     top: auto;

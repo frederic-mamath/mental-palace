@@ -42,6 +42,15 @@ export default class City {
     // Runway, apron and terminal (+v side), control tower (-v side), plus open ground around them so the
     // cloud has room to move when it steps off the airplane
     this.airportZone = { minAlong: -Infinity, maxAlong: this.runway.start + this.runway.length + 3, minAcross: -12, maxAcross: 20 }
+    // Site of the Air France Industries hangar (built by World as a project landmark) on the control-tower
+    // side, its open front facing the runway; kept free of buildings and trees
+    this.hangarSite = { along: this.runway.start + 9, across: -9.5 }
+    this.hangarZone = {
+      minAlong: this.hangarSite.along - 5.5,
+      maxAlong: this.hangarSite.along + 5.5,
+      minAcross: this.hangarSite.across - 4.5,
+      maxAcross: this.hangarSite.across + 4.5,
+    }
     this.airport = new Airport({ frame: this.frame, runway: this.runway })
     this.colliders.push(...this.airport.colliders)
 
@@ -71,7 +80,7 @@ export default class City {
       const dx = Math.max(Math.abs(along - place.along) - half, 0)
       const dy = Math.max(Math.abs(across - place.across) - half, 0)
       const nearPlace = Math.hypot(dx, dy) < place.radius + 0.6
-      return onIsland && !overlaps(this.airportZone) && !overlaps(park) && !nearPlace
+      return onIsland && !overlaps(this.airportZone) && !overlaps(this.hangarZone) && !overlaps(park) && !nearPlace
     }
 
     const lots = []
@@ -159,7 +168,8 @@ export default class City {
       const along = dx * this.frame.u.x + dz * this.frame.u.y
       const across = dx * this.frame.v.x + dz * this.frame.v.y
       const nearBuilding = this.blocks.some((lot) => Math.abs(along - lot.along) < lot.size / 2 + 1 && Math.abs(across - lot.across) < lot.size / 2 + 1)
-      if (!inZone(along, across, this.airportZone, 1) && !inZone(along, across, layout.park, 1) && !nearBuilding) spots.push([along, across])
+      const clear = !inZone(along, across, this.airportZone, 1) && !inZone(along, across, this.hangarZone, 1.5) && !inZone(along, across, layout.park, 1)
+      if (clear && !nearBuilding) spots.push([along, across])
     }
 
     this.trees = this.createTrees(spots)

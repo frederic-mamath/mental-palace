@@ -5,6 +5,7 @@ import Island from './Island.js'
 import Water from './Water.js'
 import Cloud from './Cloud.js'
 import DoubleTap from './Projects/DoubleTap.js'
+import AirFranceHangar from './Projects/AirFranceHangar.js'
 import Interactions from './Interactions.js'
 import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
@@ -33,6 +34,7 @@ export default class World {
       this.island = new Island({ shape: islands.entrepreneur })
       this.water = new Water({ islands: Object.values(islands) })
       this.city = new City({ shape: islands.city, origin: islands.entrepreneur })
+      this.airFranceHangar = new AirFranceHangar({ project: projects.airFrance, frame: this.city.frame, ...this.city.hangarSite })
 
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
@@ -47,12 +49,12 @@ export default class World {
       this.flight = new Flight({ airplane: this.airplane, airstrip: this.airstrip, city: this.city, colliders: this.colliders })
 
       // City obstacles, for when the cloud flies over (added after the decor, like every late collider)
-      this.colliders.push(...this.city.colliders)
+      this.colliders.push(...this.city.colliders, this.airFranceHangar.collider)
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
       this.boarding = new Boarding({ flight: this.flight, airplane: this.airplane, character: this.cloud })
-      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.boarding] })
+      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.airFranceHangar, this.boarding] })
       this.experience.camera.follow(this.cloud.group, { snap: true })
     })
   }
@@ -88,6 +90,7 @@ export default class World {
     this.flight?.update()
     this.boarding?.update()
     this.doubleTap?.update()
+    this.airFranceHangar?.update()
     this.cloud?.update()
     this.windField?.update()
     this.interactions?.update()
