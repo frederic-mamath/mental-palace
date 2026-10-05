@@ -55,8 +55,11 @@ export default class Cloud extends EventEmitter {
       dashStretch: 0.35,
     }
 
+    // Height of the ground the cloud floats over (0 on the islands; raised in the raid instance)
+    this.groundHeight = 0
+
     this.group = new THREE.Group()
-    this.group.position.y = this.params.hoverHeight
+    this.group.position.y = this.groundHeight + this.params.hoverHeight
     this.scene.add(this.group)
 
     this.setMaterials()
@@ -293,10 +296,11 @@ export default class Cloud extends EventEmitter {
     })
   }
 
-  // Jump straight to another spot (and island), at rest, facing `yaw`. Events: 'teleport'
-  teleport(position, { island = this.island, yaw = this.yaw } = {}) {
+  // Jump straight to another spot (and island, and ground height), at rest, facing `yaw`. Events: 'teleport'
+  teleport(position, { island = this.island, yaw = this.yaw, groundHeight = this.groundHeight } = {}) {
     this.group.position.copy(position)
     this.island = island
+    this.groundHeight = groundHeight
     this.velocity.set(0, 0, 0)
     this.yaw = yaw
     this.yawSpeed = 0
@@ -328,7 +332,7 @@ export default class Cloud extends EventEmitter {
     // First ghost once the cloud has moved a bit, so it doesn't overlap the body
     this.dash.ghostTimer = 0.045
 
-    this.dust.spawn(this.group.position, this.dash.direction)
+    this.dust.spawn(this.group.position, this.dash.direction, 6, { y: this.groundHeight + 0.25 })
     // Around the lower body, so it reads as bursting from the cloud
     this.boomRing.spawn(this.group.position.clone().setY(this.group.position.y - 0.5))
     this.trigger('dashStart', this.group.position, this.dash.direction)
@@ -400,7 +404,7 @@ export default class Cloud extends EventEmitter {
     const bank = THREE.MathUtils.clamp(-this.yawSpeed * this.params.bank, -0.35, 0.35)
 
     // Idle bob, sway and breathing squash, plus leaning forward with speed and into turns
-    this.group.position.y = this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude
+    this.group.position.y = this.groundHeight + this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude
     this.group.rotation.y = this.yaw
     this.group.rotation.x = Math.sin(t * 0.4) * 0.03 + Math.min(this.speedRatio, 1.5) * this.params.lean
     this.group.rotation.z = Math.sin(t * 0.55) * 0.05 + bank

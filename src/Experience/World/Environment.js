@@ -7,6 +7,8 @@ export default class Environment {
     this.scene = this.experience.scene
     this.debug = this.experience.debug
     this.camera = this.experience.camera
+    // Height of the ground the shadows fall on (raised while the character is in the raid instance)
+    this.groundLevel = 0
 
     this.setSky()
     this.setLights()
@@ -58,7 +60,7 @@ export default class Environment {
   // A shadow box covering the whole island would blur the shadows, so a smaller one tracks what the camera looks at
   update() {
     const focus = this.camera.controls.target
-    this.sunLight.target.position.set(focus.x, 0, focus.z)
+    this.sunLight.target.position.set(focus.x, this.groundLevel, focus.z)
     this.sunLight.position.copy(this.sunLight.target.position).addScaledVector(this.sunOffset, 3)
   }
 }

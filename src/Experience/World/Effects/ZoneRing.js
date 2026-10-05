@@ -4,12 +4,13 @@ import { interactionKinds } from '../interactionKinds.js'
 
 // Flat ring on the ground marking an interaction zone, styled by its kind (see interactionKinds.js).
 // Faint at rest; brightens when the character is inside (setActive). Solid rings then send pulses inward;
-// dashed rings turn, faster when active.
+// dashed rings turn, faster when active; double rings (an outer and an inner ring) send pulses outward.
 export default class ZoneRing {
   constructor({ parent, radius, kind = 'experience', y = 0.04 }) {
     const { color, ringStyle } = interactionKinds[kind]
     this.radius = radius
     this.dashed = ringStyle === 'dashed'
+    this.double = ringStyle === 'double'
     this.activity = 0
     this.target = 0
 
@@ -31,6 +32,7 @@ export default class ZoneRing {
       const geometry = new THREE.RingGeometry(0.94, 1, 96)
       this.ring = createRing(geometry)
       this.pulse = createRing(geometry)
+      if (this.double) this.inner = createRing(new THREE.RingGeometry(0.72, 0.78, 96))
     }
   }
 
@@ -51,7 +53,14 @@ export default class ZoneRing {
     }
 
     const progress = (elapsed * 0.8) % 1
-    this.pulse.scale.setScalar(this.radius * (1 - progress * 0.35))
+    if (this.double) {
+      this.inner.scale.copy(this.ring.scale)
+      this.inner.material.opacity = this.ring.material.opacity
+      // From the inner ring out past the outer one
+      this.pulse.scale.setScalar(this.radius * (0.75 + progress * 0.4))
+    } else {
+      this.pulse.scale.setScalar(this.radius * (1 - progress * 0.35))
+    }
     this.pulse.material.opacity = this.activity * (1 - progress) * 0.6
   }
 }

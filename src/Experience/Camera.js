@@ -83,6 +83,14 @@ export default class Camera {
     this.instance.updateProjectionMatrix()
   }
 
+  // Moves the whole view by `offset` at once (camera, orbit target and follow point), keeping its angle:
+  // for teleports, where gliding across the map would look wrong
+  jumpBy(offset) {
+    this.instance.position.add(offset)
+    this.controls.target.add(offset)
+    this.followPosition.add(offset)
+  }
+
   focus(pose, duration = 1.1) {
     if (!this.focused) {
       this.savedPose = { position: this.instance.position.clone(), target: this.controls.target.clone() }
