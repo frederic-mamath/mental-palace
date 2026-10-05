@@ -17,8 +17,16 @@ export function createOutlineMaterial(color = '#1a1626') {
   return new THREE.MeshBasicMaterial({ color, side: THREE.BackSide })
 }
 
-// Shared clock for wind-animated materials; World advances it every frame.
-export const windUniforms = { uWindTime: { value: 0 } }
+// Shared state for wind-animated materials; World updates it every frame.
+// The pusher is the character: plants around it bend away, as if pushed by its downdraft.
+// The trail lags behind the pusher, so a wake of parted plants follows it and recovers gradually.
+export const windUniforms = {
+  uWindTime: { value: 0 },
+  uPusherPosition: { value: new THREE.Vector3(1e5, 0, 1e5) },
+  uPusherTrail: { value: new THREE.Vector3(1e5, 0, 1e5) },
+  uPushRadius: { value: 3.5 },
+  uPushStrength: { value: 0.8 },
+}
 
 // Sways vertices sideways, more the higher they are (0 at y = 0, full at y = `height`), like plants in the wind.
 // Neighbouring instances move in phase, so gusts visibly travel across the field.
@@ -26,23 +34,54 @@ export function applyWind(material, { height = 1, amplitude = 0.1, speed = 1.6 }
   const float = (value) => value.toFixed(4)
 
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.uWindTime = windUniforms.uWindTime
+    Object.assign(shader.uniforms, windUniforms)
     shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\nuniform float uWindTime;')
+      .replace(
+        '#include <common>',
+        /* glsl */ `#include <common>
+        uniform float uWindTime;
+        uniform vec3 uPusherPosition;
+        uniform vec3 uPusherTrail;
+        uniform float uPushRadius;
+        uniform float uPushStrength;
+
+        // World-space offset leaning a plant at origin away from pusher and flattening it a little,
+        // fading out smoothly toward the push radius
+        vec3 pushOffset(vec3 origin, vec3 pusher, float strength) {
+          vec2 away = origin.xz - pusher.xz;
+          float pushDistance = length(away);
+          float push = (1.0 - smoothstep(0.0, uPushRadius, pushDistance)) * strength;
+          vec2 direction = away / max(pushDistance, 0.001);
+          return vec3(direction.x * push, -push * 0.6, direction.y * push);
+        }`
+      )
       .replace(
         '#include <begin_vertex>',
         /* glsl */ `#include <begin_vertex>
         {
-          vec3 origin = vec3(0.0);
           #ifdef USE_INSTANCING
-            origin = instanceMatrix[3].xyz;
+            mat4 placement = modelMatrix * instanceMatrix;
+          #else
+            mat4 placement = modelMatrix;
           #endif
-          origin = (modelMatrix * vec4(origin, 1.0)).xyz;
+          // World position of the plant's base: the whole plant reacts as one piece
+          vec3 origin = placement[3].xyz;
+          float bend = clamp(position.y / ${float(height)}, 0.0, 1.0);
+          bend *= bend;
 
           float gust = sin(uWindTime * ${float(speed)} + origin.x * 0.3 + origin.z * 0.2) * 0.7
                      + sin(uWindTime * ${float(speed * 2.7)} + origin.z * 0.9) * 0.3;
-          float bend = clamp(position.y / ${float(height)}, 0.0, 1.0);
-          transformed.xz += vec2(1.0, 0.6) * gust * ${float(amplitude)} * bend * bend;
+          transformed.xz += vec2(1.0, 0.6) * gust * ${float(amplitude)} * bend;
+
+          vec3 worldOffset = pushOffset(origin, uPusherPosition, uPushStrength)
+                           + pushOffset(origin, uPusherTrail, uPushStrength * 0.6);
+          // Where both overlap, cap the lean so plants don't fold into the ground
+          float lean = length(worldOffset);
+          if (lean > 0.0) {
+            worldOffset *= min(lean, uPushStrength * 1.2) / lean;
+            // Back into the plant's local space, undoing its instance rotation and scale
+            transformed += inverse(mat3(placement)) * worldOffset * bend;
+          }
         }`
       )
   }

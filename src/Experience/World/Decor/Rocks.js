@@ -36,9 +36,8 @@ export default class Rocks {
       }
     }
 
-    // Unshared vertices give each face its own normal: the faceted look MeshToonMaterial can't do with flatShading
-    const geometry = new THREE.DodecahedronGeometry(1, 0).toNonIndexed()
-    geometry.computeVertexNormals()
+    // Polyhedron vertices are unshared, so each face has its own normal: the faceted look without flatShading
+    const geometry = new THREE.DodecahedronGeometry(1, 0)
 
     this.mesh = new THREE.InstancedMesh(
       geometry,

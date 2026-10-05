@@ -61,10 +61,8 @@ export default class Flowers {
       })
     })
 
-    for (const mesh of this.meshes) {
-      mesh.castShadow = true
-      this.scene.add(mesh)
-    }
+    // No shadows: the shadow pass doesn't run the wind patch, so they'd stay upright while the flowers bend
+    for (const mesh of this.meshes) this.scene.add(mesh)
   }
 
   createStemGeometry() {
