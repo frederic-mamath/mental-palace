@@ -9,7 +9,8 @@ import ZoneRing from '../Effects/ZoneRing.js'
 //
 // route: { parkedAt (stop name), travelling, depart(), dropOff(stop) -> { position, yaw }, events 'landed' (stop) }
 // stops: { [stop name]: { island (IslandShape), prompt, zone } }: by default the interaction zone surrounds the
-// vehicle; a stop can set its own zone ({ position, radius }), e.g. on land when the vehicle floats offshore
+// vehicle; a stop can set its own zone ({ position, radius, ringHeight }), e.g. on a pier when the vehicle
+// floats offshore (ringHeight lifts the ring above a deck)
 // followVertical: whether the camera follows the vehicle's height changes during the trip
 export default class Boarding {
   constructor({ route, vehicle, character, stops, ringColor, zoneRadius = 6.5, ringRadius = 6, promptHeight = 2.6, followVertical = true }) {
@@ -82,8 +83,8 @@ export default class Boarding {
   }
 
   update() {
-    const { position } = this.zone
-    this.ringAnchor.position.set(position.x, 0, position.z)
+    const { position, ringHeight = 0 } = this.zone
+    this.ringAnchor.position.set(position.x, ringHeight, position.z)
     this.ringAnchor.visible = this.available
     this.ring.update(this.time.delta, this.time.elapsed)
   }

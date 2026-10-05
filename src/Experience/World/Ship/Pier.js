@@ -31,6 +31,15 @@ export default class Pier {
     this.direction = Math.sign(seaEnd - landEnd)
 
     const length = Math.abs(seaEnd - landEnd)
+    // The deck as a walkway for the character: its center kept a little inside the deck's sides and short of
+    // the tip, so the cloud doesn't bump into the moored ship
+    this.walkway = {
+      position: frame.toWorld((landEnd + seaEnd) / 2 - this.direction * 0.5, across),
+      axis: frame.u,
+      halfLength: length / 2 - 0.5,
+      halfWidth: width / 2 - 0.35,
+    }
+    this.middle = (landEnd + seaEnd) / 2
     const gradientMap = createGradientMap()
     const outlineMaterial = createOutlineMaterial()
 

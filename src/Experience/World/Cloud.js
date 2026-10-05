@@ -28,6 +28,9 @@ export default class Cloud extends EventEmitter {
     this.inputs = this.experience.inputs
     this.camera = this.experience.camera.instance
     this.colliders = this.experience.world.colliders
+    // Rectangles over the water the cloud may walk on (piers), same shape as rectangle colliders
+    this.walkways = this.experience.world.walkways
+    this.lastPosition = new THREE.Vector3()
     // The island the cloud is on: it can roam its plateau and beach, but not the sea
     this.island = islands.entrepreneur
 
@@ -162,10 +165,9 @@ export default class Cloud extends EventEmitter {
       // Frame-rate independent easing toward the wanted velocity
       this.velocity.lerp(this.targetVelocity, 1 - Math.exp(-this.params.acceleration * delta))
     }
+    this.lastPosition.copy(this.group.position)
     this.group.position.addScaledVector(this.velocity, delta)
-
-    // Stay on land: the beach is fine, the water isn't
-    this.island.clamp(this.group.position, this.island.beachWidth - this.params.shoreMargin)
+    this.stayOnGround(delta)
 
     this.resolveCollisions()
 
@@ -184,6 +186,36 @@ export default class Cloud extends EventEmitter {
   }
 
   // Push out of overlapping colliders and drop the velocity going into them, so the cloud slides around
+  // Stay on land (the beach is fine, the water isn't) or on a walkway. On land, slide along the coast as
+  // always; on a walkway, keep whichever part of the move stays on it so the cloud slides along its edges.
+  stayOnGround(delta) {
+    const position = this.group.position
+    const shoreOffset = this.island.beachWidth - this.params.shoreMargin
+    const allowed = (point) => this.island.edgeDistance(point.x, point.z) <= shoreOffset || this.onWalkway(point)
+    if (allowed(position)) return
+
+    if (!this.onWalkway(this.lastPosition)) {
+      this.island.clamp(position, shoreOffset)
+      return
+    }
+
+    for (const [x, z] of [[this.velocity.x, 0], [0, this.velocity.z]]) {
+      position.copy(this.lastPosition)
+      position.x += x * delta
+      position.z += z * delta
+      if (allowed(position)) return
+    }
+    position.copy(this.lastPosition)
+  }
+
+  onWalkway(point) {
+    return this.walkways.some(({ position, axis, halfLength, halfWidth }) => {
+      const dx = point.x - position.x
+      const dz = point.z - position.z
+      return Math.abs(dx * axis.x + dz * axis.y) <= halfLength && Math.abs(-dx * axis.y + dz * axis.x) <= halfWidth
+    })
+  }
+
   // Colliders are circles { position, radius } or rectangles { position, axis (unit Vector2 along their
   // length), halfLength, halfWidth } on the ground plane. Each one only computes how deep the cloud is in it
   // and which way out; pushing out and removing the velocity going into it is shared.

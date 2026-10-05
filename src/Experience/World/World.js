@@ -33,6 +33,8 @@ export default class World {
 
     // Circles on the ground plane the character can't enter: { position, radius }
     this.colliders = []
+    // Rectangles over the water the character may walk on (piers)
+    this.walkways = []
 
     this.resources.on('ready', () => {
       this.environment = new Environment()
@@ -78,7 +80,7 @@ export default class World {
         vehicle: this.ship.group,
         character: this.cloud,
         ringColor: '#f2c14e', // straw-hat yellow
-        ringRadius: 3.3,
+        ringRadius: 2.4,
         promptHeight: 2.4,
         followVertical: false, // don't bob the camera with the waves
         stops: {
@@ -106,6 +108,7 @@ export default class World {
     const coveEdge = shoreAlong(hobby, frame, coveAcross, distance, distance - 60)
     this.pier = new Pier({ frame, across: pierAcross, landEnd: homeEdge - 1.5, seaEnd: homeEdge + home.beachWidth + 5.5 })
     this.jetty = new Pier({ frame, across: coveAcross, landEnd: coveEdge + 1.5, seaEnd: coveEdge - hobby.beachWidth - 5.5 })
+    this.walkways.push(this.pier.walkway, this.jetty.walkway)
 
     const shipHalf = 3.8 // half the ship's length plus a little: it moors with its stern or bow at the tip
     this.seaRoute = {
@@ -114,9 +117,10 @@ export default class World {
         pier: { s: this.pier.seaEnd + shipHalf, heading: 0, across: pierAcross, dropOff: { along: homeEdge - 2.5, across: pierAcross, facing: -1 } },
         cove: { s: this.jetty.seaEnd - shipHalf, heading: Math.PI, across: coveAcross, dropOff: { along: coveEdge + 2.5, across: coveAcross, facing: 1 } },
       },
+      // Board from the middle of each pier, the ring drawn on its deck
       zones: {
-        pier: { position: frame.toWorld(homeEdge - 3, pierAcross), radius: 3.6 },
-        cove: { position: frame.toWorld(coveEdge + 3, coveAcross), radius: 3.6 },
+        pier: { position: frame.toWorld(this.pier.middle, pierAcross), radius: 3, ringHeight: 0.08 },
+        cove: { position: frame.toWorld(this.jetty.middle, coveAcross), radius: 3, ringHeight: 0.08 },
       },
     }
   }

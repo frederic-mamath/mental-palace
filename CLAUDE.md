@@ -23,7 +23,7 @@ Existing systems (all under `src/Experience/World/` unless noted):
 | Islands (`islands.js`) | adding an `IslandShape` (center, radius, harmonics, bays): land, water foam, movement limits and decor sampling follow |
 | Landmarks (`Interactions.js`) | implementing the interface documented in `Projects/DoubleTap.js` (zone, prompt anchor, focus pose, active/open/react), or `interact()` for a custom action; content in `projects.js`; camera framing via `Projects/focusPose.js` |
 | Transport (`Transport/Boarding.js`, `Transport/Route.js`) | a route extending `Route` (trips of phases along a flight frame, turnaround, `'landed'`/`'arrived'`) with its own phases, `applyPose` and `dropOff(stop)` (see `Airplane/Flight.js`), plus a vehicle object and stops config for `Boarding` |
-| Colliders (`Cloud.resolveCollisions`) | pushing circles `{ position, radius }` or rectangles `{ position, axis, halfLength, halfWidth }` (optional `disabled`) into `world.colliders` |
+| Colliders (`Cloud.resolveCollisions`) | pushing circles `{ position, radius }` or rectangles `{ position, axis, halfLength, halfWidth }` (optional `disabled`) into `world.colliders`; walkable rectangles over the water into `world.walkways` |
 | Decor (`Decor/`) | Grass, Flowers, Rocks, PalmTrees with `island`, seeded `random`, `avoid`, `exclude` |
 | Effects (`Effects/`) | self-contained pooled effects (ZoneRing, HeartPop, DustBurst, Afterimages, BoomRing, SpeedLines) with `spawn`/`update` |
 | Wind (`toon.js` `applyWind`, `WindField.js`) | `applyWind(material, ...)` on any instanced plant material |
@@ -49,7 +49,7 @@ Shared vocabulary between the user and Claude. Use these words with these meanin
 
 **Transport**
 - **Vehicle**: what carries the cloud between islands (AF airplane, pirate ship). **Route**: its trips between **stops** (`Flight` for the plane). **Board**: get on (E at the vehicle). **Trip**: one journey between two stops. **Drop-off**: where the cloud steps out when the vehicle has **landed** (stopped), before it turns around and is **parked**.
-- **Airstrip**: the bush runway on the entrepreneur island. **Pier**: the ship's dock.
+- **Airstrip**: the bush runway on the entrepreneur island. **Pier**: the ship's dock (the hobby island's is the **jetty**). **Walkway**: a rectangle over the water the cloud may walk on (the piers).
 
 **Process**
 - **Step**: one commit of a multi-step feature, followed by the user's **manual test**. **Fingerprint**: a before/after record proving a refactor changed nothing. **Milestone tag**: `v0.<n>-<slug>` on a tested state.
