@@ -7,7 +7,10 @@ import { range, sampleBand, scatter } from './scatter.js'
 // Faceted, outlined rocks on the plateau, on the beach and poking out of the shallows.
 // Large rocks on land become colliders.
 export default class Rocks {
-  constructor({ island, random, avoid, colliders }) {
+  // exclude(x, z): spots to leave bare (e.g. the airstrip). The random draws stay the same, and an excluded
+  // large rock leaves its would-be collider in `cleared` instead of `colliders`, so decor placed after it
+  // (which avoids colliders) doesn't move either.
+  constructor({ island, random, avoid, colliders, exclude = () => false, cleared = [] }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
@@ -28,10 +31,12 @@ export default class Rocks {
         // Sunk into the ground so they look settled rather than placed
         const position = new THREE.Vector3(point.x, zone.y - scale.y * 0.2, point.z)
         const rotation = new THREE.Euler(range(random, -0.3, 0.3), random() * Math.PI * 2, range(random, -0.3, 0.3))
-        rocks.push({ position, rotation, scale })
+        const excluded = exclude(point.x, point.z)
+        if (!excluded) rocks.push({ position, rotation, scale })
 
         if (zone.solid && size > 0.6) {
-          colliders.push({ position: position.clone().setY(0), radius: Math.max(scale.x, scale.z) * 0.9 })
+          const collider = { position: position.clone().setY(0), radius: Math.max(scale.x, scale.z) * 0.9 }
+          ;(excluded ? cleared : colliders).push(collider)
         }
       }
     }

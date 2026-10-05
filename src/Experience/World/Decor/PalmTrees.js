@@ -7,7 +7,10 @@ import { range, sampleBand, scatter } from './scatter.js'
 
 // Palm trees along the coast: curved ringed trunks leaning out to sea, drooping leaves swaying gently.
 export default class PalmTrees {
-  constructor({ island, random, avoid, colliders }) {
+  // exclude(x, z): spots to leave bare (e.g. the airstrip). Excluded palms are still generated, so the
+  // random draws (and every other palm) stay the same, but not added; their would-be collider goes to
+  // `cleared` instead of `colliders`, so decor placed after them doesn't move either.
+  constructor({ island, random, avoid, colliders, exclude = () => false, cleared = [] }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -40,11 +43,16 @@ export default class PalmTrees {
       // The trunk bends toward local +x; turn that outward, away from the island center
       palm.rotation.y = -point.angle + range(random, -0.4, 0.4)
       palm.scale.setScalar(range(random, 0.85, 1.15))
-      this.scene.add(palm)
 
-      colliders.push({ position: new THREE.Vector3(point.x, 0, point.z), radius: 0.5 * palm.scale.x })
+      const collider = { position: new THREE.Vector3(point.x, 0, point.z), radius: 0.5 * palm.scale.x }
+      if (exclude(point.x, point.z)) {
+        cleared.push(collider)
+        return null
+      }
+      this.scene.add(palm)
+      colliders.push(collider)
       return palm
-    })
+    }).filter(Boolean)
   }
 
   createPalm() {

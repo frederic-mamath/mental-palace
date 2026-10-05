@@ -6,7 +6,8 @@ import { range, sampleBand, scatter } from './scatter.js'
 
 // Hundreds of small grass tufts on the plateau, in a single instanced draw call, swaying in the wind.
 export default class Grass {
-  constructor({ island, random, avoid, count = 900 }) {
+  // exclude(x, z): spots to leave bare (e.g. the airstrip); the random draws stay the same, so nothing else moves
+  constructor({ island, random, avoid, exclude = () => false, count = 900 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
@@ -24,14 +25,20 @@ export default class Grass {
     const scale = new THREE.Vector3()
     const position = new THREE.Vector3()
 
-    points.forEach((point, i) => {
+    let placed = 0
+    for (const point of points) {
       const size = range(random, 1, 1.7)
       position.set(point.x, 0, point.z)
       quaternion.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, random() * Math.PI * 2)
       scale.set(size, size * range(random, 0.8, 1.3), size)
-      this.mesh.setMatrixAt(i, matrix.compose(position, quaternion, scale))
-      this.mesh.setColorAt(i, palette[Math.floor(random() * palette.length)])
-    })
+      const color = palette[Math.floor(random() * palette.length)]
+      if (exclude(point.x, point.z)) continue
+
+      this.mesh.setMatrixAt(placed, matrix.compose(position, quaternion, scale))
+      this.mesh.setColorAt(placed, color)
+      placed++
+    }
+    this.mesh.count = placed
 
     this.mesh.receiveShadow = true
     this.scene.add(this.mesh)

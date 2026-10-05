@@ -6,7 +6,8 @@ import { range, sampleBand, scatter } from './scatter.js'
 
 // Patches of small flowers, one color per patch. Stems, petals and centers are three instanced meshes sharing matrices.
 export default class Flowers {
-  constructor({ island, random, avoid, patches = 16 }) {
+  // exclude(x, z): spots to leave bare (e.g. the airstrip); the random draws stay the same, so nothing else moves
+  constructor({ island, random, avoid, exclude = () => false, patches = 16 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
@@ -47,18 +48,22 @@ export default class Flowers {
       return new THREE.InstancedMesh(geometry, material, flowers.length)
     })
 
-    flowers.forEach((flower, i) => {
+    let count = 0
+    for (const flower of flowers) {
       const size = range(random, 1.3, 2)
       position.set(flower.x, 0, flower.z)
       quaternion.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, random() * Math.PI * 2)
       scale.setScalar(size)
-      matrix.compose(position, quaternion, scale)
+      if (exclude(flower.x, flower.z)) continue
 
+      matrix.compose(position, quaternion, scale)
       this.meshes.forEach((mesh, part) => {
-        mesh.setMatrixAt(i, matrix)
-        if (parts[part].tinted) mesh.setColorAt(i, flower.color)
+        mesh.setMatrixAt(count, matrix)
+        if (parts[part].tinted) mesh.setColorAt(count, flower.color)
       })
-    })
+      count++
+    }
+    for (const mesh of this.meshes) mesh.count = count
 
     // No shadows: the shadow pass doesn't run the wind patch, so they'd stay upright while the flowers bend
     for (const mesh of this.meshes) this.scene.add(mesh)

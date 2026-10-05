@@ -39,6 +39,7 @@ src/Experience/
                     islands.js: island outlines (IslandShape) shared by land, water foam, decor and movement limits
                     WindField.js: drives grass/flower bending from the character (push, wake, dash gust, shockwave)
                     Interactions.js: zones, prompt, camera focus and project card for landmarks
+                    Airstrip.js: bush airstrip on the flight line toward the city
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
     Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees

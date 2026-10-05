@@ -15,6 +15,7 @@ import { createRandom } from './Decor/scatter.js'
 import { islands } from './islands.js'
 import WindField from './WindField.js'
 import City from './City/City.js'
+import Airstrip from './Airstrip.js'
 
 export default class World {
   constructor() {
@@ -34,7 +35,10 @@ export default class World {
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
       this.colliders.push(this.doubleTap.collider)
 
+      this.airstrip = new Airstrip({ island: islands.entrepreneur, destination: islands.city })
       this.setDecor()
+      // After the decor, so this new collider doesn't change where decor was placed
+      this.colliders.push(this.airstrip.collider)
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
@@ -45,24 +49,32 @@ export default class World {
 
   // Decor goes around what's already placed: big pieces first (they add colliders), small ones last.
   // One seed per kind, so tweaking one kind doesn't reshuffle the others.
+  // Pieces on the airstrip are removed after placement rather than avoided, so the rest of the layout
+  // stays exactly as it was before the airstrip existed; removed large pieces leave `cleared` zones that
+  // later decor still avoids (as it avoided their colliders) without blocking the character.
   setDecor() {
     const spawn = { position: new THREE.Vector3(), radius: 2.5 }
+    const cleared = []
     const avoid = (margin, { keepSpawnClear = true } = {}) => [
       ...(keepSpawnClear ? [spawn] : []),
-      ...this.colliders.map(({ position, radius }) => ({ position, radius: radius + margin })),
+      ...[...this.colliders, ...cleared].map(({ position, radius }) => ({ position, radius: radius + margin })),
     ]
+    // Palm crowns and rocks need more room than grass around the strip
+    const offStrip = (margin) => (x, z) => this.airstrip.contains(x, z, margin)
 
     const island = islands.entrepreneur
-    this.palmTrees = new PalmTrees({ island, random: createRandom(1), avoid: avoid(2), colliders: this.colliders })
-    this.rocks = new Rocks({ island, random: createRandom(2), avoid: avoid(1.5), colliders: this.colliders })
+    const colliders = this.colliders
+    this.palmTrees = new PalmTrees({ island, random: createRandom(1), avoid: avoid(2), colliders, exclude: offStrip(3), cleared })
+    this.rocks = new Rocks({ island, random: createRandom(2), avoid: avoid(1.5), colliders, exclude: offStrip(2), cleared })
     // Grass may grow under the spawn point: it bends away from the cloud anyway
-    this.grass = new Grass({ island, random: createRandom(3), avoid: avoid(0.2, { keepSpawnClear: false }) })
-    this.flowers = new Flowers({ island, random: createRandom(4), avoid: avoid(0.5) })
+    this.grass = new Grass({ island, random: createRandom(3), avoid: avoid(0.2, { keepSpawnClear: false }), exclude: offStrip(0.3) })
+    this.flowers = new Flowers({ island, random: createRandom(4), avoid: avoid(0.5), exclude: offStrip(0.8) })
   }
 
   update() {
     this.water?.update()
     this.palmTrees?.update()
+    this.airstrip?.update()
     this.doubleTap?.update()
     this.cloud?.update()
     this.windField?.update()
