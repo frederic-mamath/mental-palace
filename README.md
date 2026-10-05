@@ -30,4 +30,5 @@ src/Experience/
   sources.js        assets to preload (models, textures)
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Floor, Cloud (main character), toon helpers
+    Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
 ```

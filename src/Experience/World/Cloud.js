@@ -12,6 +12,7 @@ export default class Cloud {
     this.debug = this.experience.debug
     this.inputs = this.experience.inputs
     this.camera = this.experience.camera.instance
+    this.colliders = this.experience.world.colliders
 
     this.params = {
       color: '#ffffff',
@@ -27,6 +28,7 @@ export default class Cloud {
       lean: 0.12,
       bank: 0.06,
       boundsRadius: 27,
+      collisionRadius: 1.4,
     }
 
     this.group = new THREE.Group()
@@ -103,6 +105,7 @@ export default class Cloud {
     this.targetVelocity = new THREE.Vector3()
     this.forward = new THREE.Vector3()
     this.right = new THREE.Vector3()
+    this.pushDirection = new THREE.Vector3()
     this.yaw = 0
     this.yawSpeed = 0
     this.speedRatio = 0
@@ -140,6 +143,8 @@ export default class Cloud {
       position.z *= this.params.boundsRadius / distance
     }
 
+    this.resolveCollisions()
+
     // Turn toward the movement direction (the face looks down +z) via the shortest angle
     const speed = Math.hypot(this.velocity.x, this.velocity.z)
     const previousYaw = this.yaw
@@ -152,6 +157,24 @@ export default class Cloud {
     const yawSpeed = delta > 0 ? (this.yaw - previousYaw) / delta : 0
     this.yawSpeed += (yawSpeed - this.yawSpeed) * (1 - Math.exp(-8 * delta))
     this.speedRatio = speed / this.params.speed
+  }
+
+  // Push out of overlapping colliders and drop the velocity going into them, so the cloud slides around
+  resolveCollisions() {
+    const position = this.group.position
+
+    for (const collider of this.colliders) {
+      this.pushDirection.set(position.x - collider.position.x, 0, position.z - collider.position.z)
+      const distance = this.pushDirection.length()
+      const minDistance = collider.radius + this.params.collisionRadius
+      if (distance >= minDistance || distance === 0) continue
+
+      this.pushDirection.divideScalar(distance)
+      position.addScaledVector(this.pushDirection, minDistance - distance)
+
+      const into = this.velocity.dot(this.pushDirection)
+      if (into < 0) this.velocity.addScaledVector(this.pushDirection, -into)
+    }
   }
 
   updateOutlineThickness() {
