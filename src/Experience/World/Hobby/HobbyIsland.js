@@ -10,13 +10,14 @@ import Rocks from '../Decor/Rocks.js'
 import PalmTrees from '../Decor/PalmTrees.js'
 import TrainingGround from './TrainingGround.js'
 import PirateCove from './PirateCove.js'
+import Arena from './Arena.js'
 
 // Zones, in the island's frame: `along` points away from the entrepreneur island (north), `across` east.
 // Each zone gets a ground patch now; their landmarks and story beats come later.
 const zones = {
   plaza: { along: 0, across: 0, radius: 3.6, color: '#d8cdb6', label: null },
   training: { along: 2, across: -14, radius: 7, color: '#c9a46c', label: 'Training Ground' }, // shonen: Naruto, Bleach, One Piece
-  arena: { along: 2, across: 14, radius: 7, color: '#a39a90', label: 'Arena' }, // online games: WoW, LoL, StarCraft
+  arena: { along: 2, across: 14, radius: 9, color: '#a39a90', label: 'Arena' }, // online games: WoW, LoL, StarCraft
   meadow: { along: 15, across: 0, radius: 6, color: '#a8dc84', label: 'Story Meadow' }, // FF7
   cove: { along: null, across: 0, radius: 5, color: '#f2dca2', label: 'Pirate Cove' }, // ship dock, in the bay (placed from the coastline)
 }
@@ -51,6 +52,7 @@ export default class HobbyIsland {
     // Zone landmarks after the decor, so their colliders don't change where decor was placed
     this.trainingGround = new TrainingGround({ frame: this.frame, zone: this.zones.training, colliders: this.colliders })
     this.pirateCove = new PirateCove({ frame: this.frame, zone: this.zones.cove, colliders: this.colliders })
+    this.arena = new Arena({ frame: this.frame, zone: this.zones.arena, colliders: this.colliders })
   }
 
   // Dirt paths from the plaza out to each zone, gently curved
@@ -216,5 +218,6 @@ export default class HobbyIsland {
   update() {
     this.palmTrees.update()
     this.trainingGround.update()
+    this.arena.update()
   }
 }
