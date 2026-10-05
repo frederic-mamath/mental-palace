@@ -86,6 +86,7 @@ export default class World {
     this.palmTrees?.update()
     this.airstrip?.update()
     this.flight?.update()
+    this.boarding?.update()
     this.doubleTap?.update()
     this.cloud?.update()
     this.windField?.update()
