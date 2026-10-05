@@ -4,6 +4,7 @@ import { createGradientMap, createOutlineMaterial } from './toon.js'
 import Afterimages from './Effects/Afterimages.js'
 import DustBurst from './Effects/DustBurst.js'
 import SpeedLines from './Effects/SpeedLines.js'
+import { island, islandRadius } from './islandShape.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
@@ -30,7 +31,7 @@ export default class Cloud {
       turnSpeed: 10,
       lean: 0.12,
       bank: 0.06,
-      boundsRadius: 27,
+      shoreMargin: 0.8, // how far from the waterline the cloud's center must stay
       collisionRadius: 1.4,
       dashSpeed: 24,
       dashDuration: 0.28,
@@ -150,12 +151,13 @@ export default class Cloud {
     }
     this.group.position.addScaledVector(this.velocity, delta)
 
-    // Stay on the island
+    // Stay on land: the beach is fine, the water isn't
     const position = this.group.position
     const distance = Math.hypot(position.x, position.z)
-    if (distance > this.params.boundsRadius) {
-      position.x *= this.params.boundsRadius / distance
-      position.z *= this.params.boundsRadius / distance
+    const limit = islandRadius(Math.atan2(position.z, position.x)) + island.beachWidth - this.params.shoreMargin
+    if (distance > limit) {
+      position.x *= limit / distance
+      position.z *= limit / distance
     }
 
     this.resolveCollisions()

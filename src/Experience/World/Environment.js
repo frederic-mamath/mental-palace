@@ -6,6 +6,7 @@ export default class Environment {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.debug = this.experience.debug
+    this.camera = this.experience.camera
 
     this.setSky()
     this.setLights()
@@ -15,7 +16,8 @@ export default class Environment {
   setSky() {
     this.skyColor = new THREE.Color('#8ecbff')
     this.scene.background = this.skyColor
-    this.scene.fog = new THREE.Fog(this.skyColor, 25, 60)
+    // Far enough to see the whole island, close enough that the sea melts into the sky
+    this.scene.fog = new THREE.Fog(this.skyColor, 45, 140)
   }
 
   setLights() {
@@ -24,17 +26,19 @@ export default class Environment {
     this.scene.add(this.ambientLight)
 
     this.sunLight = new THREE.DirectionalLight('#fff3dc', 2.5)
-    this.sunLight.position.set(4, 8, 5)
+    // Direction to the sun; the light and its shadow box follow the view (see update)
+    this.sunOffset = new THREE.Vector3(4, 8, 5)
+    this.sunLight.position.copy(this.sunOffset)
     this.sunLight.castShadow = true
     this.sunLight.shadow.mapSize.set(2048, 2048)
     this.sunLight.shadow.camera.near = 1
-    this.sunLight.shadow.camera.far = 25
-    this.sunLight.shadow.camera.left = -10
-    this.sunLight.shadow.camera.right = 10
-    this.sunLight.shadow.camera.top = 10
-    this.sunLight.shadow.camera.bottom = -10
+    this.sunLight.shadow.camera.far = 60
+    this.sunLight.shadow.camera.left = -20
+    this.sunLight.shadow.camera.right = 20
+    this.sunLight.shadow.camera.top = 20
+    this.sunLight.shadow.camera.bottom = -20
     this.sunLight.shadow.normalBias = 0.03
-    this.scene.add(this.sunLight)
+    this.scene.add(this.sunLight, this.sunLight.target)
   }
 
   setDebug() {
@@ -46,8 +50,15 @@ export default class Environment {
     folder.add(this.ambientLight, 'intensity', 0, 5, 0.01).name('ambientIntensity')
     folder.addColor(this.sunLight, 'color').name('sunColor')
     folder.add(this.sunLight, 'intensity', 0, 10, 0.01).name('sunIntensity')
-    folder.add(this.sunLight.position, 'x', -10, 10, 0.01).name('sunX')
-    folder.add(this.sunLight.position, 'y', 0, 15, 0.01).name('sunY')
-    folder.add(this.sunLight.position, 'z', -10, 10, 0.01).name('sunZ')
+    folder.add(this.sunOffset, 'x', -10, 10, 0.01).name('sunX')
+    folder.add(this.sunOffset, 'y', 0, 15, 0.01).name('sunY')
+    folder.add(this.sunOffset, 'z', -10, 10, 0.01).name('sunZ')
+  }
+
+  // A shadow box covering the whole island would blur the shadows, so a smaller one tracks what the camera looks at
+  update() {
+    const focus = this.camera.controls.target
+    this.sunLight.target.position.set(focus.x, 0, focus.z)
+    this.sunLight.position.copy(this.sunLight.target.position).addScaledVector(this.sunOffset, 3)
   }
 }

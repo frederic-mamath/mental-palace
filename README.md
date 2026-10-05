@@ -30,7 +30,8 @@ src/Experience/
   Renderer.js       WebGL renderer
   sources.js        assets to preload (models, textures)
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
-  World/            World, Environment, Floor, Cloud (main character), toon helpers
+  World/            World, Environment, Island, Water, Cloud (main character), toon helpers
+                    islandShape.js: the coastline shared by land, water foam and movement limits
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
     Effects/        reusable visual effects (Afterimages, DustBurst)
 ```

@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
 import Environment from './Environment.js'
-import Floor from './Floor.js'
+import Island from './Island.js'
+import Water from './Water.js'
 import Cloud from './Cloud.js'
 import DoubleTap from './Projects/DoubleTap.js'
 
@@ -15,7 +16,8 @@ export default class World {
 
     this.resources.on('ready', () => {
       this.environment = new Environment()
-      this.floor = new Floor()
+      this.island = new Island()
+      this.water = new Water()
 
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ position: new THREE.Vector3(0, 0, -12) })
@@ -27,7 +29,9 @@ export default class World {
   }
 
   update() {
+    this.water?.update()
     this.doubleTap?.update()
     this.cloud?.update()
+    this.environment?.update()
   }
 }

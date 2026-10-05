@@ -22,8 +22,9 @@ export default class Camera {
 
   setInstance() {
     this.baseFov = 35
-    this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 100)
-    this.instance.position.set(6, 4, 9)
+    this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 250)
+    // Pulled back and up so the island reads as a whole
+    this.instance.position.set(16, 19, 25)
     this.scene.add(this.instance)
   }
 
@@ -32,8 +33,8 @@ export default class Camera {
     this.controls.target.set(0, 1.5, 0)
     this.controls.enableDamping = true
     this.controls.enablePan = false
-    this.controls.minDistance = 5
-    this.controls.maxDistance = 25
+    this.controls.minDistance = 6
+    this.controls.maxDistance = 45
     this.controls.maxPolarAngle = Math.PI * 0.45
   }
 

@@ -1,0 +1,71 @@
+import * as THREE from 'three'
+import Experience from '../Experience.js'
+import { createGradientMap } from './toon.js'
+import { island, islandRadius } from './islandShape.js'
+
+// Land in two stacked slabs following the shared outline:
+// a grass plateau with rounded earthy cliffs, and a lower sand ring that sinks into the water.
+export default class Island {
+  constructor() {
+    this.experience = new Experience()
+    this.scene = this.experience.scene
+    this.debug = this.experience.debug
+
+    const gradientMap = createGradientMap()
+    this.materials = {
+      grass: new THREE.MeshToonMaterial({ color: '#7fcf6b', gradientMap }),
+      cliff: new THREE.MeshToonMaterial({ color: '#b07a4f', gradientMap }),
+      sand: new THREE.MeshToonMaterial({ color: '#f2dca2', gradientMap }),
+    }
+
+    // Plateau top sits at y = 0, where the character and landmarks stand
+    // Small plateau bevel keeps the cliff steep; the beach bevel reaches full width right at the waterline
+    this.plateau = this.createSlab({ offset: 0, top: 0, bevel: 0.15 }, [this.materials.grass, this.materials.cliff])
+    this.beach = this.createSlab({ offset: island.beachWidth, top: island.waterLevel + 0.3, bevel: 0.3 }, this.materials.sand)
+
+    this.setDebug()
+  }
+
+  createSlab({ offset, top, bevel, depth = 3 }, material) {
+    const segments = 160
+    const shape = new THREE.Shape()
+    for (let i = 0; i < segments; i++) {
+      const angle = (i / segments) * Math.PI * 2
+      // The bevel grows the outline by its size, so start that much inside
+      const radius = islandRadius(angle) + offset - bevel
+      // Shape y becomes world -z after the rotation below, hence the minus sign
+      const x = Math.cos(angle) * radius
+      const y = -Math.sin(angle) * radius
+      if (i === 0) shape.moveTo(x, y)
+      else shape.lineTo(x, y)
+    }
+    shape.closePath()
+
+    const geometry = new THREE.ExtrudeGeometry(shape, {
+      depth,
+      steps: 1,
+      curveSegments: 1,
+      bevelEnabled: true,
+      bevelThickness: bevel,
+      bevelSize: bevel,
+      bevelSegments: 3,
+    })
+
+    // Material groups: 0 = top/bottom caps, 1 = sides and bevel
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.rotation.x = -Math.PI / 2
+    mesh.position.y = top - depth - bevel
+    mesh.receiveShadow = true
+    this.scene.add(mesh)
+    return mesh
+  }
+
+  setDebug() {
+    if (!this.debug.active) return
+
+    const folder = this.debug.ui.addFolder('Island')
+    folder.addColor(this.materials.grass, 'color').name('grass')
+    folder.addColor(this.materials.cliff, 'color').name('cliff')
+    folder.addColor(this.materials.sand, 'color').name('sand')
+  }
+}
