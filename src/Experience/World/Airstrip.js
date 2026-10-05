@@ -8,7 +8,7 @@ import { createCityFrame } from './City/cityFrame.js'
 // with ragged edges and tyre tracks, white-painted edge stones and a windsock.
 // Planes take off toward the destination (+along) and land coming back from it.
 export default class Airstrip {
-  constructor({ island, destination, length = 19, width = 3.6 }) {
+  constructor({ island, destination, length = 14.25, width = 3.6 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
