@@ -162,8 +162,8 @@ export default class Cloud extends EventEmitter {
     this.nextBlink = 2
   }
 
-  // Golden goat horns rising from the top of the head toward the sky with a gentle S-shaped wave, the tips
-  // flicking outward and back; thick at the base, tapering, with darker ridges
+  // Golden goat horns shaped like an L: a short rise from the top of the head, a turn toward the back, then
+  // a wavy end lifting slightly toward the sky; thick at the base, tapering, with darker ridges
   setHorns() {
     const tubular = 32
     const radial = 10
@@ -187,8 +187,9 @@ export default class Cloud extends EventEmitter {
 
     for (const side of [-1, 1]) {
       const curve = new THREE.CatmullRomCurve3(
-        // x outward, y up, z back: up and out, a slight inward wave, then the tip bending out and back
-        [[0, 0, 0], [0.14, 0.3, 0.02], [0.3, 0.56, -0.04], [0.31, 0.82, -0.12], [0.46, 1.0, -0.2], [0.64, 1.06, -0.34]].map(
+        // x outward, y up, z forward (the back is -z): rise, turn back, run back nearly level, then a small
+        // wave lifting the tip slightly upward
+        [[0, 0, 0], [0.08, 0.22, -0.05], [0.18, 0.32, -0.3], [0.26, 0.3, -0.6], [0.32, 0.36, -0.86], [0.36, 0.52, -1.05], [0.42, 0.62, -1.18]].map(
           ([x, y, z]) => new THREE.Vector3(x * side, y, z)
         )
       )
