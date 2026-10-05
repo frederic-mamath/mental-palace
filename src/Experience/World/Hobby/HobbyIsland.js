@@ -8,6 +8,8 @@ import Grass from '../Decor/Grass.js'
 import Flowers from '../Decor/Flowers.js'
 import Rocks from '../Decor/Rocks.js'
 import PalmTrees from '../Decor/PalmTrees.js'
+import TrainingGround from './TrainingGround.js'
+import PirateCove from './PirateCove.js'
 
 // Zones, in the island's frame: `along` points away from the entrepreneur island (north), `across` east.
 // Each zone gets a ground patch now; their landmarks and story beats come later.
@@ -46,6 +48,9 @@ export default class HobbyIsland {
     this.setZonePatches()
     this.setSignpost()
     this.setDecor()
+    // Zone landmarks after the decor, so their colliders don't change where decor was placed
+    this.trainingGround = new TrainingGround({ frame: this.frame, zone: this.zones.training, colliders: this.colliders })
+    this.pirateCove = new PirateCove({ frame: this.frame, zone: this.zones.cove, colliders: this.colliders })
   }
 
   // Dirt paths from the plaza out to each zone, gently curved
@@ -210,5 +215,6 @@ export default class HobbyIsland {
 
   update() {
     this.palmTrees.update()
+    this.trainingGround.update()
   }
 }

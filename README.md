@@ -47,7 +47,8 @@ src/Experience/
     Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
     City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
-    Hobby/          hobby island (shonen, online games, FF7): zones, paths, signpost, decor
+    Hobby/          hobby island (shonen, online games, FF7): zones, paths, signpost, decor,
+                    zone landmarks (TrainingGround, PirateCove)
     Airplane/       AF airliner model and its flights between the two runways
     Ship/           pirate ship model, its voyages to the hobby island's cove, and the piers
     Transport/      vehicles between islands: Route (trips, turnaround, events) and Boarding (prompt, ring, poof, camera, drop-off)

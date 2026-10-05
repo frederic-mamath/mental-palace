@@ -117,3 +117,21 @@ export function applyWind(material, { height = 1, amplitude = 0.1, speed = 1.6 }
   // onBeforeCompile closures all stringify the same, so tell three.js these variants need distinct programs
   material.customProgramCacheKey = () => `wind-${height}-${amplitude}-${speed}`
 }
+
+// Adds a mesh and its ink outline (an inverted hull: the same geometry scaled up around its own origin) to
+// `parent`. `outline` is a scale factor (number or [x, y, z]); position and rotation apply to both.
+export function addOutlined(parent, geometry, material, { position = [0, 0, 0], rotation = [0, 0, 0], outline = 1.06, castShadow = true } = {}) {
+  const mesh = new THREE.Mesh(geometry, material)
+  const hull = new THREE.Mesh(geometry, outlineMaterialShared)
+  for (const object of [mesh, hull]) {
+    object.position.set(...position)
+    object.rotation.set(...rotation)
+  }
+  if (Array.isArray(outline)) hull.scale.set(...outline)
+  else hull.scale.setScalar(outline)
+  mesh.castShadow = castShadow
+  mesh.receiveShadow = true
+  parent.add(mesh, hull)
+  return mesh
+}
+const outlineMaterialShared = createOutlineMaterial()
