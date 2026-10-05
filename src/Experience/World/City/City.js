@@ -39,8 +39,9 @@ export default class City {
     // Runway starts just inside the quay facing the entrepreneur island and runs inland (+u)
     const edge = shape.radiusAt(shape.angleOf(origin.center.x, origin.center.z))
     this.runway = { start: -edge + 3, length: layout.runwayLength, width: layout.runwayWidth }
-    // Runway, apron and terminal (+v side), control tower (-v side)
-    this.airportZone = { minAlong: -Infinity, maxAlong: this.runway.start + this.runway.length + 2, minAcross: -9, maxAcross: 15 }
+    // Runway, apron and terminal (+v side), control tower (-v side), plus open ground around them so the
+    // cloud has room to move when it steps off the airplane
+    this.airportZone = { minAlong: -Infinity, maxAlong: this.runway.start + this.runway.length + 3, minAcross: -12, maxAcross: 20 }
     this.airport = new Airport({ frame: this.frame, runway: this.runway })
     this.colliders.push(...this.airport.colliders)
 

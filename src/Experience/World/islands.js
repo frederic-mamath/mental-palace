@@ -72,7 +72,7 @@ export const islands = {
   city: new IslandShape({
     name: 'city',
     center: { x: -88, z: -66 },
-    radius: 30,
+    radius: 33,
     beachWidth: 0.8, // a narrow stone ledge along the quays, not a beach
     harmonics: [
       [2, 0.06, 1.1],
