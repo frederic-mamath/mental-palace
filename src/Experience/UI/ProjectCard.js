@@ -51,36 +51,59 @@ export default class ProjectCard extends EventEmitter {
     band.append(close)
 
     const header = create('header', 'project-card__header')
-    const icon = create('img', 'project-card__icon')
-    icon.src = project.icon
-    icon.alt = ''
+    if (project.icon) {
+      const icon = create('img', 'project-card__icon')
+      icon.src = project.icon
+      icon.alt = ''
+      header.append(icon)
+    }
     const titles = create('div')
     titles.append(create('h2', 'project-card__title', project.title), create('p', 'project-card__tagline', project.tagline))
-    header.append(icon, titles)
-
-    const highlights = create('ul', 'project-card__highlights')
-    for (const highlight of project.highlights) highlights.append(create('li', null, highlight))
-
-    const role = create('section', 'project-card__section')
-    role.append(create('h3', null, 'Role'), create('p', null, project.role))
-
-    const stack = create('section', 'project-card__section')
-    const chips = create('ul', 'project-card__chips')
-    for (const item of project.stack) chips.append(create('li', null, item))
-    stack.append(create('h3', null, 'Stack'), chips)
-
-    const links = create('footer', 'project-card__links')
-    for (const { label, url } of project.links) {
-      const link = create('a', 'project-card__link', label)
-      link.href = url
-      link.target = '_blank'
-      link.rel = 'noopener noreferrer'
-      links.append(link)
-    }
+    header.append(titles)
 
     const body = create('div', 'project-card__body')
-    body.append(header, create('p', 'project-card__summary', project.summary), highlights, role, stack, links)
-    body.append(create('p', 'project-card__hint', 'Esc or move to close · E to tap the phone'))
+    body.append(header, create('p', 'project-card__summary', project.summary))
+
+    // Optional sections: only what the project's entry provides
+    if (project.highlights?.length) {
+      const highlights = create('ul', 'project-card__highlights')
+      for (const highlight of project.highlights) highlights.append(create('li', null, highlight))
+      body.append(highlights)
+    }
+
+    if (project.role) {
+      const role = create('section', 'project-card__section')
+      role.append(create('h3', null, 'Role'), create('p', null, project.role))
+      body.append(role)
+    }
+
+    if (project.stack?.length) {
+      const stack = create('section', 'project-card__section')
+      const chips = create('ul', 'project-card__chips')
+      for (const item of project.stack) chips.append(create('li', null, item))
+      stack.append(create('h3', null, 'Stack'), chips)
+      body.append(stack)
+    }
+
+    if (project.lesson) {
+      const lesson = create('section', 'project-card__section project-card__lesson')
+      lesson.append(create('h3', null, 'Lesson'), create('blockquote', null, project.lesson))
+      body.append(lesson)
+    }
+
+    if (project.links?.length) {
+      const links = create('footer', 'project-card__links')
+      for (const { label, url } of project.links) {
+        const link = create('a', 'project-card__link', label)
+        link.href = url
+        link.target = '_blank'
+        link.rel = 'noopener noreferrer'
+        links.append(link)
+      }
+      body.append(links)
+    }
+
+    body.append(create('p', 'project-card__hint', 'Esc or move to close · E to interact'))
 
     this.element.replaceChildren(band, body)
   }

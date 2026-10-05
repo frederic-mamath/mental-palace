@@ -258,6 +258,17 @@ body {
   box-shadow: 2px 2px 0 var(--ink);
 }
 
+/* Lesson: a pull quote with an accent bar */
+.project-card__lesson blockquote {
+  padding: 10px 12px 10px 14px;
+  background: color-mix(in srgb, var(--accent), var(--paper) 88%);
+  border-left: 5px solid var(--accent);
+  border-radius: 4px;
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
 .project-card__hint {
   font-size: 12px;
   opacity: 0.6;
