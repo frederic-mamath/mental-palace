@@ -2,19 +2,27 @@ import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import Experience from '../../Experience.js'
 import { createGradientMap, createOutlineMaterial } from '../toon.js'
+import ZoneRing from '../Effects/ZoneRing.js'
+import HeartPop from '../Effects/HeartPop.js'
 
-// Project landmark: a giant cel-shaded iPhone standing on a stone pedestal, showing the DoubleTap app.
+// Project landmark: a giant cel-shaded iPhone standing on a stone pedestal, showing the Double Tap app.
+//
+// Landmark interface used by Interactions:
+//   project, zone { position, radius }, pickTargets, getPromptAnchor(), getFocusPose(viewport, fov),
+//   setActive(bool) when the character is in the zone, setOpen(bool), react() on a tap
 export default class DoubleTap {
-  constructor({ position = new THREE.Vector3(), rotationY = 0 } = {}) {
+  constructor({ project, position = new THREE.Vector3(), rotationY = 0 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
     this.debug = this.experience.debug
 
+    this.project = project
+    this.icon = this.experience.resources.items.doubleTapIcon?.image
+
     this.params = {
-      bodyColor: '#3d3b8e',
-      screenTop: '#ff8a4c',
-      screenBottom: '#ff3d7f',
+      bodyColor: '#2d2b38',
+      accent: project.accent,
       outlineThickness: 0.05,
     }
 
@@ -29,12 +37,22 @@ export default class DoubleTap {
 
     // Cheap circular collider used by the character
     this.collider = { position: this.group.position, radius: this.pedestal.radiusBottom }
+    // Entering this circle offers to open the project
+    this.zone = { position: this.group.position, radius: 5 }
+
+    this.active = false
+    this.isOpen = false
+    this.screenBrightness = 0
+    // Spring for the phone's hop when woken up or tapped
+    this.bounce = { value: 0, velocity: 0 }
+    this.rippleStart = 0
 
     this.setMaterials()
     this.setPedestal()
     this.setPhone()
     this.setScreen()
     this.setTapRipples()
+    this.setEffects()
     this.setDebug()
   }
 
@@ -77,7 +95,8 @@ export default class DoubleTap {
 
     this.phone = new THREE.Group()
     // Sunk slightly into the pedestal and leaning back, like a monument
-    this.phone.position.y = this.pedestal.height - 0.15
+    this.phoneBaseY = this.pedestal.height - 0.15
+    this.phone.position.y = this.phoneBaseY
     this.phone.rotation.x = -0.12
     this.group.add(this.phone)
 
@@ -148,11 +167,13 @@ export default class DoubleTap {
     this.phone.add(screen)
   }
 
+  // The app's home look: dark screen, accent glow, real app icon, name, tagline and status
   drawScreen() {
     const ctx = this.canvas.getContext('2d')
     const { width: w, height: h } = this.canvas
     const pxPerUnit = w / this.screenSize.width
     const font = '-apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif'
+    const accent = this.params.accent
 
     ctx.clearRect(0, 0, w, h)
 
@@ -163,9 +184,19 @@ export default class DoubleTap {
     ctx.clip()
 
     const background = ctx.createLinearGradient(0, 0, 0, h)
-    background.addColorStop(0, this.params.screenTop)
-    background.addColorStop(1, this.params.screenBottom)
+    background.addColorStop(0, '#1d1b24')
+    background.addColorStop(1, '#0b0a0f')
     ctx.fillStyle = background
+    ctx.fillRect(0, 0, w, h)
+
+    const iconSize = 220
+    const iconX = w / 2
+    const iconY = h * 0.36
+
+    const glow = ctx.createRadialGradient(iconX, iconY, 0, iconX, iconY, 300)
+    glow.addColorStop(0, `${accent}88`)
+    glow.addColorStop(1, `${accent}00`)
+    ctx.fillStyle = glow
     ctx.fillRect(0, 0, w, h)
 
     // Status bar
@@ -179,45 +210,53 @@ export default class DoubleTap {
     ctx.fill()
 
     // Dynamic Island
-    ctx.fillStyle = '#0b0a14'
+    ctx.fillStyle = '#000000'
     ctx.beginPath()
     ctx.roundRect(w / 2 - 80, 34, 160, 48, 24)
     ctx.fill()
 
-    // App icon with a "double tap" glyph: a finger dot and two ripples
-    const iconSize = 220
-    const iconX = w / 2
-    const iconY = h * 0.42
-    ctx.fillStyle = '#ffffff'
+    // App icon, with the iOS corner radius (about 22% of its size)
+    ctx.save()
     ctx.beginPath()
-    ctx.roundRect(iconX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize, 52)
-    ctx.fill()
-
-    ctx.fillStyle = this.params.screenBottom
-    ctx.strokeStyle = this.params.screenBottom
-    ctx.beginPath()
-    ctx.arc(iconX, iconY, 22, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.lineWidth = 11
-    for (const [radius, alpha] of [[48, 0.8], [74, 0.45]]) {
-      ctx.globalAlpha = alpha
-      ctx.beginPath()
-      ctx.arc(iconX, iconY, radius, 0, Math.PI * 2)
-      ctx.stroke()
+    ctx.roundRect(iconX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize, iconSize * 0.2237)
+    ctx.clip()
+    if (this.icon) {
+      ctx.drawImage(this.icon, iconX - iconSize / 2, iconY - iconSize / 2, iconSize, iconSize)
+    } else {
+      ctx.fillStyle = accent
+      ctx.fill()
     }
-    ctx.globalAlpha = 1
+    ctx.restore()
 
-    // Title
-    ctx.fillStyle = '#ffffff'
+    // Name, then the tagline one sentence per line, the first in the accent color
+    let y = iconY + iconSize / 2 + 90
     ctx.textAlign = 'center'
-    ctx.font = `800 76px ${font}`
-    ctx.fillText('DoubleTap', w / 2, iconY + iconSize / 2 + 80)
-    ctx.globalAlpha = 0.8
-    ctx.font = `500 32px ${font}`
-    ctx.fillText('Current project', w / 2, iconY + iconSize / 2 + 140)
-    ctx.globalAlpha = 1
+    ctx.fillStyle = '#ffffff'
+    ctx.font = `800 72px ${font}`
+    ctx.fillText(this.project.title, w / 2, y)
+
+    y += 80
+    ctx.font = `700 40px ${font}`
+    this.project.tagline.split(/(?<=\.)\s+/).forEach((line, i) => {
+      ctx.fillStyle = i === 0 ? accent : '#ffffff'
+      ctx.fillText(line, w / 2, y)
+      y += 50
+    })
+
+    // Status pill
+    y += 40
+    ctx.font = `600 26px ${font}`
+    const pillWidth = ctx.measureText(this.project.status).width + 48
+    ctx.strokeStyle = accent
+    ctx.lineWidth = 3
+    ctx.beginPath()
+    ctx.roundRect(w / 2 - pillWidth / 2, y - 24, pillWidth, 48, 24)
+    ctx.stroke()
+    ctx.fillStyle = accent
+    ctx.fillText(this.project.status, w / 2, y + 1)
 
     // Home indicator
+    ctx.fillStyle = '#ffffff'
     ctx.beginPath()
     ctx.roundRect(w / 2 - 85, h - 34, 170, 10, 5)
     ctx.fill()
@@ -226,7 +265,7 @@ export default class DoubleTap {
 
     this.screenTexture.needsUpdate = true
 
-    // Where the icon sits on the screen plane, for the ripples
+    // Where the icon sits on the screen plane, for the ripples and hearts
     this.iconCenter = new THREE.Vector2(0, (h / 2 - iconY) / pxPerUnit)
     this.iconHalfSize = iconSize / 2 / pxPerUnit
   }
@@ -245,20 +284,97 @@ export default class DoubleTap {
     })
   }
 
+  setEffects() {
+    this.zoneRing = new ZoneRing({ parent: this.group, radius: 4.6, color: this.params.accent })
+    this.hearts = new HeartPop({ parent: this.phone })
+  }
+
   setDebug() {
     if (!this.debug.active) return
 
     const folder = this.debug.ui.addFolder('DoubleTap')
     folder.addColor(this.params, 'bodyColor').onChange((value) => this.materials.body.color.set(value))
-    folder.addColor(this.params, 'screenTop').onChange(() => this.drawScreen())
-    folder.addColor(this.params, 'screenBottom').onChange(() => this.drawScreen())
+    folder.addColor(this.params, 'accent').onChange(() => this.drawScreen())
+  }
+
+  // --- Landmark interface ---
+
+  get pickTargets() {
+    return [this.phone]
+  }
+
+  // World point above the phone where the "press E" prompt floats
+  getPromptAnchor(target = new THREE.Vector3()) {
+    return this.phone.localToWorld(target.set(0, this.size.height + 0.7, 0))
+  }
+
+  // Camera pose facing the screen, aimed off-center so the phone sits beside the project card:
+  // left of it on wide screens, above it on narrow ones (760px matches the card's bottom-sheet breakpoint in style.css)
+  getFocusPose({ width, height }, fov) {
+    const center = this.screen.getWorldPosition(new THREE.Vector3())
+    const quaternion = this.screen.getWorldQuaternion(new THREE.Quaternion())
+    const normal = new THREE.Vector3(0, 0, 1).applyQuaternion(quaternion)
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(quaternion)
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(quaternion)
+
+    const narrow = width < 760
+    const tanHalfFov = Math.tan(THREE.MathUtils.degToRad(fov / 2))
+    // Distance at which the phone fills this share of the view height
+    const share = narrow ? 0.38 : 0.7
+    const distance = this.size.height / share / (2 * tanHalfFov)
+    const visibleHeight = 2 * distance * tanHalfFov
+    const visibleWidth = visibleHeight * (width / height)
+
+    const target = center.clone()
+    if (narrow) target.addScaledVector(up, -visibleHeight * 0.24)
+    else target.addScaledVector(right, visibleWidth * 0.2)
+
+    return { position: target.clone().addScaledVector(normal, distance), target }
+  }
+
+  setActive(active) {
+    if (active && !this.active) this.bounce.velocity += 6
+    this.active = active
+    this.zoneRing.setActive(active)
+  }
+
+  setOpen(open) {
+    this.isOpen = open
+  }
+
+  // A tap on the phone: hop, a heart pops out of the icon, and the ripples restart right away
+  react() {
+    this.bounce.velocity += 9
+    this.hearts.spawn(new THREE.Vector3(this.iconCenter.x, this.screen.position.y + this.iconCenter.y, this.screen.position.z))
+    this.rippleStart = this.time.elapsed
   }
 
   update() {
-    // Two quick taps, then a pause
+    const delta = this.time.delta
+    const elapsed = this.time.elapsed
+
+    // Hop spring, substepped so it stays stable on slow frames
+    const steps = Math.ceil(delta / (1 / 120))
+    for (let i = 0; i < steps; i++) {
+      const step = delta / steps
+      const acceleration = -140 * this.bounce.value - 10 * this.bounce.velocity
+      this.bounce.velocity += acceleration * step
+      this.bounce.value += this.bounce.velocity * step
+    }
+    this.phone.position.y = this.phoneBaseY + this.bounce.value * 0.3
+
+    // The screen wakes up when the character comes close
+    const awake = this.active || this.isOpen ? 1 : 0
+    this.screenBrightness += (awake - this.screenBrightness) * (1 - Math.exp(-6 * delta))
+    this.screen.material.color.setScalar(0.78 + 0.22 * this.screenBrightness)
+
+    this.zoneRing.update(delta, elapsed)
+    this.hearts.update(delta)
+
+    // Two quick taps, then a pause (restarted by react)
     const period = 2.4
     const duration = 0.8
-    const cycle = this.time.elapsed % period
+    const cycle = (elapsed - this.rippleStart) % period
 
     for (const ripple of this.ripples) {
       const progress = (cycle - ripple.userData.delay) / duration

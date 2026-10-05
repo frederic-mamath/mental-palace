@@ -19,6 +19,9 @@ Add `#debug` to the URL to open the lil-gui debug panel.
 | Move | WASD (ZQSD on AZERTY) or arrow keys, relative to the camera |
 | Sprint | Shift |
 | Dash | Space (toward the held direction, or straight ahead) |
+| Open a project | Walk into its ring, then E (or click the landmark / the prompt) |
+| Tap the project | E while it's open |
+| Close a project | Esc, click outside the card, or move |
 | Orbit / zoom camera | Mouse drag / wheel |
 
 ## Structure
@@ -29,11 +32,14 @@ src/Experience/
   Camera.js         perspective camera + OrbitControls following the character
   Renderer.js       WebGL renderer
   sources.js        assets to preload (models, textures)
+  projects.js       portfolio content, one entry per project landmark
+  UI/               DOM overlays (InteractPrompt, ProjectCard)
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Island, Water, Cloud (main character), toon helpers
                     islandShape.js: the coastline shared by land, water foam and movement limits
                     WindField.js: drives grass/flower bending from the character (push, wake, dash gust, shockwave)
+                    Interactions.js: zones, prompt, camera focus and project card for landmarks
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
-    Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing)
+    Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
 ```

@@ -59,7 +59,10 @@ export default class WindField {
     windUniforms.uPusherPosition.value.copy(position)
     windUniforms.uPusherTrail.value.lerp(position, ease(this.params.trailFollow))
     windUniforms.uPushRadius.value = this.params.pushRadius + (this.params.dashPushRadius - this.params.pushRadius) * this.gust
-    windUniforms.uPushStrength.value = this.params.pushStrength + (this.params.dashPushStrength - this.params.pushStrength) * this.gust
+    // A hidden character (smoke poof) pushes nothing
+    const presence = this.character.group.visible ? 1 : 0
+    windUniforms.uPushStrength.value =
+      (this.params.pushStrength + (this.params.dashPushStrength - this.params.pushStrength) * this.gust) * presence
     windUniforms.uShockwaveAge.value += delta
   }
 }

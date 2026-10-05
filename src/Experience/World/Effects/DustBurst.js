@@ -4,7 +4,7 @@ import { createGradientMap } from '../toon.js'
 
 // Cel-shaded dust puffs kicked out on the ground, mostly opposite to a direction.
 export default class DustBurst {
-  constructor({ count = 12, lifetime = 0.55, color = '#f1ece0' } = {}) {
+  constructor({ count = 24, lifetime = 0.55, color = '#f1ece0' } = {}) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
@@ -26,7 +26,8 @@ export default class DustBurst {
     })
   }
 
-  spawn(position, direction, amount = 6) {
+  // Fans out opposite to `direction`; `y` is the burst height (ground by default), `size` scales the puffs
+  spawn(position, direction, amount = 6, { y = 0.25, size = 1 } = {}) {
     const back = direction.clone().negate()
 
     for (let i = 0; i < amount; i++) {
@@ -39,9 +40,9 @@ export default class DustBurst {
       velocity.multiplyScalar(2 + Math.random() * 2.5)
       velocity.y = 0.6 + Math.random() * 0.8
 
-      puff.position.set(position.x, 0.25, position.z)
+      puff.position.set(position.x, y, position.z)
       puff.userData.age = 0
-      puff.userData.size = 0.25 + Math.random() * 0.25
+      puff.userData.size = (0.25 + Math.random() * 0.25) * size
       puff.visible = true
     }
   }

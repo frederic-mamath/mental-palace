@@ -16,6 +16,11 @@ export default class Camera {
     this.followSpeed = 6
     this.fovOffset = 0
 
+    // Focus mode: a scripted glide to a pose ({ position, target }) and back, with the orbit controls off
+    this.focused = false
+    this.transition = null
+    this.savedPose = null
+
     this.setInstance()
     this.setControls()
   }
@@ -71,12 +76,62 @@ export default class Camera {
     this.instance.updateProjectionMatrix()
   }
 
+  focus(pose, duration = 1.1) {
+    if (!this.focused) {
+      this.savedPose = { position: this.instance.position.clone(), target: this.controls.target.clone() }
+    }
+    this.focused = true
+    this.controls.enabled = false
+    this.startTransition(pose, duration)
+  }
+
+  unfocus(duration = 0.9) {
+    if (!this.focused) return
+    this.focused = false
+    this.startTransition(this.savedPose, duration, () => {
+      this.controls.enabled = true
+    })
+  }
+
+  startTransition(pose, duration, onComplete) {
+    this.transition = {
+      from: { position: this.instance.position.clone(), target: this.controls.target.clone() },
+      to: pose,
+      elapsed: 0,
+      duration,
+      onComplete,
+    }
+  }
+
+  updateTransition() {
+    const transition = this.transition
+    transition.elapsed += this.experience.time.delta
+    const t = Math.min(transition.elapsed / transition.duration, 1)
+    const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+
+    this.instance.position.lerpVectors(transition.from.position, transition.to.position, eased)
+    this.controls.target.lerpVectors(transition.from.target, transition.to.target, eased)
+    this.instance.lookAt(this.controls.target)
+
+    if (t === 1) {
+      this.transition = null
+      transition.onComplete?.()
+    }
+  }
+
   resize() {
     this.instance.aspect = this.sizes.width / this.sizes.height
     this.instance.updateProjectionMatrix()
   }
 
   update() {
+    if (this.transition) {
+      this.updateTransition()
+      return
+    }
+    // Hold the focused pose: no following, no orbit
+    if (this.focused) return
+
     if (this.target) this.updateFollow()
     this.updateKick()
     this.controls.update()

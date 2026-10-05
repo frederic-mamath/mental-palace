@@ -5,6 +5,8 @@ import Island from './Island.js'
 import Water from './Water.js'
 import Cloud from './Cloud.js'
 import DoubleTap from './Projects/DoubleTap.js'
+import Interactions from './Interactions.js'
+import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
 import Rocks from './Decor/Rocks.js'
 import Grass from './Decor/Grass.js'
@@ -26,13 +28,14 @@ export default class World {
       this.water = new Water()
 
       // North is -z: straight ahead from the spawn point
-      this.doubleTap = new DoubleTap({ position: new THREE.Vector3(0, 0, -12) })
+      this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
       this.colliders.push(this.doubleTap.collider)
 
       this.setDecor()
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
+      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap] })
       this.experience.camera.follow(this.cloud.group)
     })
   }
@@ -59,6 +62,7 @@ export default class World {
     this.doubleTap?.update()
     this.cloud?.update()
     this.windField?.update()
+    this.interactions?.update()
     this.environment?.update()
   }
 }

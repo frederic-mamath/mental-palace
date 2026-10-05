@@ -10,6 +10,12 @@ import { island, islandRadius } from './islandShape.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
+// Used instead of the keyboard state while movement is locked (a project is open)
+const idleActions = { forward: false, backward: false, left: false, right: false, sprint: false }
+
+// Four bursts fanning out in every direction for the smoke poof
+const poofDirections = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)]
+
 // Events: 'dashStart' (position, direction)
 export default class Cloud extends EventEmitter {
   constructor() {
@@ -131,7 +137,7 @@ export default class Cloud extends EventEmitter {
   }
 
   updateMovement(delta) {
-    const { actions } = this.inputs
+    const actions = this.inputs.movementLocked ? idleActions : this.inputs.actions
     const inputX = Number(actions.right) - Number(actions.left)
     const inputZ = Number(actions.forward) - Number(actions.backward)
 
@@ -214,8 +220,17 @@ export default class Cloud extends EventEmitter {
     })
   }
 
+  // Ninja smoke poof: vanish while a project is open (it would block the camera's view), reappear after
+  setHidden(hidden) {
+    if (this.group.visible === !hidden) return
+
+    const position = this.group.position
+    for (const direction of poofDirections) this.dust.spawn(position, direction, 5, { y: position.y - 0.3, size: 2.2 })
+    this.group.visible = !hidden
+  }
+
   startDash() {
-    if (this.dash.cooldown > 0) return
+    if (this.dash.cooldown > 0 || this.inputs.movementLocked) return
 
     // Dash toward the held direction, or straight ahead when no direction is held
     if (this.targetVelocity.lengthSq() > 0) this.dash.direction.copy(this.targetVelocity).normalize()

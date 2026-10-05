@@ -9,11 +9,16 @@ const bindings = {
   right: ['KeyD', 'ArrowRight'],
   sprint: ['ShiftLeft', 'ShiftRight'],
   dash: ['Space'],
+  interact: ['KeyE'],
+  close: ['Escape'],
 }
 
 export default class Inputs extends EventEmitter {
   constructor() {
     super()
+
+    // Set while a project is open: the character ignores movement, but actions still fire as events
+    this.movementLocked = false
 
     this.actions = Object.fromEntries(Object.keys(bindings).map((action) => [action, false]))
     this.codeToAction = new Map()
