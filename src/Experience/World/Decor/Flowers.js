@@ -2,17 +2,16 @@ import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import Experience from '../../Experience.js'
 import { createGradientMap, applyWind } from '../toon.js'
-import { islandRadius } from '../islandShape.js'
 import { range, sampleBand, scatter } from './scatter.js'
 
 // Patches of small flowers, one color per patch. Stems, petals and centers are three instanced meshes sharing matrices.
 export default class Flowers {
-  constructor({ random, avoid, patches = 16 }) {
+  constructor({ island, random, avoid, patches = 16 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
     const palette = ['#ff7eb6', '#ffffff', '#ffd23f', '#b388ff', '#ff5c5c'].map((color) => new THREE.Color(color))
-    const centers = scatter({ random, count: patches, sample: (r) => sampleBand(r, { to: -2.5 }), avoid, spacing: 5 })
+    const centers = scatter({ random, count: patches, sample: (r) => sampleBand(r, island, { to: -2.5 }), avoid, spacing: 5 })
 
     const flowers = []
     for (const center of centers) {
@@ -24,7 +23,7 @@ export default class Flowers {
         const distance = Math.sqrt(random()) * 1.8
         const x = center.x + Math.cos(angle) * distance
         const z = center.z + Math.sin(angle) * distance
-        const insideIsland = Math.hypot(x, z) < islandRadius(Math.atan2(z, x)) - 0.6
+        const insideIsland = island.edgeDistance(x, z) < -0.6
         const blocked = avoid.some(({ position, radius }) => Math.hypot(x - position.x, z - position.z) < radius)
         if (insideIsland && !blocked) flowers.push({ x, z, color })
       }

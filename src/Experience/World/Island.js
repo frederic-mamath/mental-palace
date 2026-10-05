@@ -1,15 +1,16 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
 import { createGradientMap } from './toon.js'
-import { island, islandRadius } from './islandShape.js'
+import { sea } from './islands.js'
 
-// Land in two stacked slabs following the shared outline:
+// Land in two stacked slabs following an island's outline (an IslandShape from islands.js):
 // a grass plateau with rounded earthy cliffs, and a lower sand ring that sinks into the water.
 export default class Island {
-  constructor() {
+  constructor({ shape }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.debug = this.experience.debug
+    this.shape = shape
 
     const gradientMap = createGradientMap()
     this.materials = {
@@ -21,7 +22,7 @@ export default class Island {
     // Plateau top sits at y = 0, where the character and landmarks stand
     // Small plateau bevel keeps the cliff steep; the beach bevel reaches full width right at the waterline
     this.plateau = this.createSlab({ offset: 0, top: 0, bevel: 0.15 }, [this.materials.grass, this.materials.cliff])
-    this.beach = this.createSlab({ offset: island.beachWidth, top: island.waterLevel + 0.3, bevel: 0.3 }, this.materials.sand)
+    this.beach = this.createSlab({ offset: shape.beachWidth, top: sea.waterLevel + 0.3, bevel: 0.3 }, this.materials.sand)
 
     this.setDebug()
   }
@@ -32,7 +33,7 @@ export default class Island {
     for (let i = 0; i < segments; i++) {
       const angle = (i / segments) * Math.PI * 2
       // The bevel grows the outline by its size, so start that much inside
-      const radius = islandRadius(angle) + offset - bevel
+      const radius = this.shape.radiusAt(angle) + offset - bevel
       // Shape y becomes world -z after the rotation below, hence the minus sign
       const x = Math.cos(angle) * radius
       const y = -Math.sin(angle) * radius
@@ -54,7 +55,7 @@ export default class Island {
     // Material groups: 0 = top/bottom caps, 1 = sides and bevel
     const mesh = new THREE.Mesh(geometry, material)
     mesh.rotation.x = -Math.PI / 2
-    mesh.position.y = top - depth - bevel
+    mesh.position.set(this.shape.center.x, top - depth - bevel, this.shape.center.z)
     mesh.receiveShadow = true
     this.scene.add(mesh)
     return mesh
@@ -63,7 +64,7 @@ export default class Island {
   setDebug() {
     if (!this.debug.active) return
 
-    const folder = this.debug.ui.addFolder('Island')
+    const folder = this.debug.ui.addFolder(`Island: ${this.shape.name}`)
     folder.addColor(this.materials.grass, 'color').name('grass')
     folder.addColor(this.materials.cliff, 'color').name('cliff')
     folder.addColor(this.materials.sand, 'color').name('sand')

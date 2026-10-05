@@ -1,27 +1,27 @@
 import * as THREE from 'three'
 import Experience from '../../Experience.js'
 import { createGradientMap, createOutlineMaterial } from '../toon.js'
-import { island } from '../islandShape.js'
+import { sea } from '../islands.js'
 import { range, sampleBand, scatter } from './scatter.js'
 
 // Faceted, outlined rocks on the plateau, on the beach and poking out of the shallows.
 // Large rocks on land become colliders.
 export default class Rocks {
-  constructor({ random, avoid, colliders }) {
+  constructor({ island, random, avoid, colliders }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
     const outlineThickness = 0.05
-    const beachTop = island.waterLevel + 0.3
+    const beachTop = sea.waterLevel + 0.3
     const zones = [
       { count: 14, band: { to: -1.5 }, y: 0, size: [0.3, 1.1], height: [0.7, 1], spacing: 2.5, solid: true },
       { count: 10, band: { from: 0.4, to: island.beachWidth - 0.3 }, y: beachTop, size: [0.25, 0.6], height: [0.6, 0.9], spacing: 2, solid: true },
-      { count: 14, band: { from: island.beachWidth + 1, to: island.beachWidth + 6 }, y: island.waterLevel, size: [0.5, 1.6], height: [0.5, 0.85], spacing: 3 },
+      { count: 14, band: { from: island.beachWidth + 1, to: island.beachWidth + 6 }, y: sea.waterLevel, size: [0.5, 1.6], height: [0.5, 0.85], spacing: 3 },
     ]
 
     const rocks = []
     for (const zone of zones) {
-      const points = scatter({ random, count: zone.count, sample: (r) => sampleBand(r, zone.band), avoid, spacing: zone.spacing })
+      const points = scatter({ random, count: zone.count, sample: (r) => sampleBand(r, island, zone.band), avoid, spacing: zone.spacing })
       for (const point of points) {
         const size = range(random, ...zone.size)
         const scale = new THREE.Vector3(size * range(random, 0.8, 1.2), size * range(random, ...zone.height), size * range(random, 0.8, 1.2))

@@ -36,7 +36,7 @@ src/Experience/
   UI/               DOM overlays (InteractPrompt, ProjectCard)
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Island, Water, Cloud (main character), toon helpers
-                    islandShape.js: the coastline shared by land, water foam and movement limits
+                    islands.js: island outlines (IslandShape) shared by land, water foam, decor and movement limits
                     WindField.js: drives grass/flower bending from the character (push, wake, dash gust, shockwave)
                     Interactions.js: zones, prompt, camera focus and project card for landmarks
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)

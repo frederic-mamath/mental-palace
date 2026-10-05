@@ -12,6 +12,7 @@ import Rocks from './Decor/Rocks.js'
 import Grass from './Decor/Grass.js'
 import Flowers from './Decor/Flowers.js'
 import { createRandom } from './Decor/scatter.js'
+import { islands } from './islands.js'
 import WindField from './WindField.js'
 
 export default class World {
@@ -24,8 +25,8 @@ export default class World {
 
     this.resources.on('ready', () => {
       this.environment = new Environment()
-      this.island = new Island()
-      this.water = new Water()
+      this.island = new Island({ shape: islands.entrepreneur })
+      this.water = new Water({ islands: Object.values(islands) })
 
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
@@ -49,11 +50,12 @@ export default class World {
       ...this.colliders.map(({ position, radius }) => ({ position, radius: radius + margin })),
     ]
 
-    this.palmTrees = new PalmTrees({ random: createRandom(1), avoid: avoid(2), colliders: this.colliders })
-    this.rocks = new Rocks({ random: createRandom(2), avoid: avoid(1.5), colliders: this.colliders })
+    const island = islands.entrepreneur
+    this.palmTrees = new PalmTrees({ island, random: createRandom(1), avoid: avoid(2), colliders: this.colliders })
+    this.rocks = new Rocks({ island, random: createRandom(2), avoid: avoid(1.5), colliders: this.colliders })
     // Grass may grow under the spawn point: it bends away from the cloud anyway
-    this.grass = new Grass({ random: createRandom(3), avoid: avoid(0.2, { keepSpawnClear: false }) })
-    this.flowers = new Flowers({ random: createRandom(4), avoid: avoid(0.5) })
+    this.grass = new Grass({ island, random: createRandom(3), avoid: avoid(0.2, { keepSpawnClear: false }) })
+    this.flowers = new Flowers({ island, random: createRandom(4), avoid: avoid(0.5) })
   }
 
   update() {

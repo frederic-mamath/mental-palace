@@ -2,12 +2,12 @@ import * as THREE from 'three'
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import Experience from '../../Experience.js'
 import { createGradientMap, createOutlineMaterial } from '../toon.js'
-import { island } from '../islandShape.js'
+import { sea } from '../islands.js'
 import { range, sampleBand, scatter } from './scatter.js'
 
 // Palm trees along the coast: curved ringed trunks leaning out to sea, drooping leaves swaying gently.
 export default class PalmTrees {
-  constructor({ random, avoid, colliders }) {
+  constructor({ island, random, avoid, colliders }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -27,13 +27,13 @@ export default class PalmTrees {
     this.coconutGeometry = new THREE.IcosahedronGeometry(0.14, 1)
 
     // Most on the plateau rim, a few down on the beach
-    const rim = scatter({ random, count: 6, sample: (r) => sampleBand(r, { from: -2.6, to: -1.2 }), avoid, spacing: 6 })
+    const rim = scatter({ random, count: 6, sample: (r) => sampleBand(r, island, { from: -2.6, to: -1.2 }), avoid, spacing: 6 })
     const rimZones = rim.map((point) => ({ position: point, radius: 5 }))
-    const beach = scatter({ random, count: 4, sample: (r) => sampleBand(r, { from: 0.6, to: 1.5 }), avoid: [...avoid, ...rimZones], spacing: 6 })
+    const beach = scatter({ random, count: 4, sample: (r) => sampleBand(r, island, { from: 0.6, to: 1.5 }), avoid: [...avoid, ...rimZones], spacing: 6 })
 
     this.palms = [
       ...rim.map((point) => ({ point, y: 0 })),
-      ...beach.map((point) => ({ point, y: island.waterLevel + 0.3 })),
+      ...beach.map((point) => ({ point, y: sea.waterLevel + 0.3 })),
     ].map(({ point, y }) => {
       const palm = this.createPalm()
       palm.position.set(point.x, y, point.z)

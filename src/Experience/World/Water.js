@@ -1,11 +1,11 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
-import { island, islandRadiusGLSL } from './islandShape.js'
+import { sea, shorelineGLSL } from './islands.js'
 
-// Flat toon sea out to the horizon: hard-edged shallow band around the beach,
+// Flat toon sea out to the horizon: hard-edged shallow band around every island's beach,
 // wobbling foam against the sand and wave rings rolling outward. Fades into the fog.
 export default class Water {
-  constructor() {
+  constructor({ islands }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -17,7 +17,6 @@ export default class Water {
         THREE.UniformsLib.fog,
         {
           uTime: { value: 0 },
-          uBeachWidth: { value: island.beachWidth },
           uShallowWidth: { value: 6 },
           uFoamWidth: { value: 0.45 },
           uDeepColor: { value: new THREE.Color('#2c86d6') },
@@ -44,7 +43,6 @@ export default class Water {
         #include <fog_pars_fragment>
 
         uniform float uTime;
-        uniform float uBeachWidth;
         uniform float uShallowWidth;
         uniform float uFoamWidth;
         uniform vec3 uDeepColor;
@@ -53,11 +51,12 @@ export default class Water {
 
         varying vec2 vWorldXZ;
 
-        ${islandRadiusGLSL}
+        ${shorelineGLSL(islands)}
 
         void main() {
-          float angle = atan(vWorldXZ.y, vWorldXZ.x);
-          float shoreDistance = length(vWorldXZ) - islandRadius(angle) - uBeachWidth;
+          vec2 shore = shoreline(vWorldXZ);
+          float shoreDistance = shore.x;
+          float angle = shore.y;
           float wobble = sin(angle * 23.0 + uTime * 1.6) * 0.12 + sin(angle * 11.0 - uTime * 1.1) * 0.1;
 
           vec3 color = shoreDistance < uShallowWidth + wobble * 2.0 ? uShallowColor : uDeepColor;
@@ -84,7 +83,7 @@ export default class Water {
 
     this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), this.material)
     this.mesh.rotation.x = -Math.PI / 2
-    this.mesh.position.y = island.waterLevel
+    this.mesh.position.y = sea.waterLevel
     this.scene.add(this.mesh)
 
     this.setDebug()

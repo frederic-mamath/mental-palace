@@ -6,7 +6,7 @@ import { range, sampleBand, scatter } from './scatter.js'
 
 // Hundreds of small grass tufts on the plateau, in a single instanced draw call, swaying in the wind.
 export default class Grass {
-  constructor({ random, avoid, count = 900 }) {
+  constructor({ island, random, avoid, count = 900 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
@@ -15,7 +15,7 @@ export default class Grass {
     const material = new THREE.MeshToonMaterial({ color: '#ffffff', gradientMap: createGradientMap() })
     applyWind(material, { height: 0.6, amplitude: 0.12 })
 
-    const points = scatter({ random, count, sample: (r) => sampleBand(r, { to: -0.6 }), avoid })
+    const points = scatter({ random, count, sample: (r) => sampleBand(r, island, { to: -0.6 }), avoid })
     const palette = ['#5aab4c', '#4c9c43', '#8fd873'].map((color) => new THREE.Color(color))
 
     this.mesh = new THREE.InstancedMesh(geometry, material, points.length)

@@ -6,7 +6,7 @@ import Afterimages from './Effects/Afterimages.js'
 import DustBurst from './Effects/DustBurst.js'
 import SpeedLines from './Effects/SpeedLines.js'
 import BoomRing from './Effects/BoomRing.js'
-import { island, islandRadius } from './islandShape.js'
+import { islands } from './islands.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
@@ -28,6 +28,8 @@ export default class Cloud extends EventEmitter {
     this.inputs = this.experience.inputs
     this.camera = this.experience.camera.instance
     this.colliders = this.experience.world.colliders
+    // The island the cloud is on: it can roam its plateau and beach, but not the sea
+    this.island = islands.entrepreneur
 
     this.params = {
       color: '#ffffff',
@@ -163,13 +165,7 @@ export default class Cloud extends EventEmitter {
     this.group.position.addScaledVector(this.velocity, delta)
 
     // Stay on land: the beach is fine, the water isn't
-    const position = this.group.position
-    const distance = Math.hypot(position.x, position.z)
-    const limit = islandRadius(Math.atan2(position.z, position.x)) + island.beachWidth - this.params.shoreMargin
-    if (distance > limit) {
-      position.x *= limit / distance
-      position.z *= limit / distance
-    }
+    this.island.clamp(this.group.position, this.island.beachWidth - this.params.shoreMargin)
 
     this.resolveCollisions()
 
