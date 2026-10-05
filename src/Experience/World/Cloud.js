@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import Experience from '../Experience.js'
 import { createGradientMap, createOutlineMaterial } from './toon.js'
+import Afterimages from './Effects/Afterimages.js'
+import DustBurst from './Effects/DustBurst.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
@@ -29,6 +31,10 @@ export default class Cloud {
       bank: 0.06,
       boundsRadius: 27,
       collisionRadius: 1.4,
+      dashSpeed: 16,
+      dashDuration: 0.22,
+      dashCooldown: 0.5,
+      dashStretch: 0.35,
     }
 
     this.group = new THREE.Group()
@@ -39,6 +45,7 @@ export default class Cloud {
     this.setBody()
     this.setFace()
     this.setMovement()
+    this.setDash()
     this.setDebug()
   }
 
@@ -66,6 +73,7 @@ export default class Cloud {
 
     this.geometry = new THREE.IcosahedronGeometry(1, 5)
     this.body = new THREE.Group()
+    this.puffs = []
     this.outlines = []
 
     for (const [x, y, z, radius] of puffs) {
@@ -73,6 +81,7 @@ export default class Cloud {
       puff.position.set(x, y, z)
       puff.scale.setScalar(radius)
       puff.castShadow = true
+      this.puffs.push(puff)
       this.body.add(puff)
 
       const outline = new THREE.Mesh(this.geometry, this.materials.outline)
@@ -131,8 +140,13 @@ export default class Cloud {
       this.targetVelocity.normalize().multiplyScalar(speed)
     }
 
-    // Frame-rate independent easing toward the wanted velocity
-    this.velocity.lerp(this.targetVelocity, 1 - Math.exp(-this.params.acceleration * delta))
+    if (this.dash.timer > 0) {
+      // Locked at full dash speed; once it ends, the easing below brakes back to walking speed
+      this.velocity.copy(this.dash.direction).multiplyScalar(this.params.dashSpeed)
+    } else {
+      // Frame-rate independent easing toward the wanted velocity
+      this.velocity.lerp(this.targetVelocity, 1 - Math.exp(-this.params.acceleration * delta))
+    }
     this.group.position.addScaledVector(this.velocity, delta)
 
     // Stay on the island
@@ -177,6 +191,64 @@ export default class Cloud {
     }
   }
 
+  setDash() {
+    this.dash = { timer: 0, cooldown: 0, ghostTimer: 0, direction: new THREE.Vector3() }
+    // Spring driving the stretch: pulled to 1 while dashing, released to 0 after, overshooting into a squash
+    this.stretch = { value: 0, velocity: 0 }
+
+    this.afterimages = new Afterimages({ meshes: this.puffs })
+    this.dust = new DustBurst()
+
+    this.inputs.on('actionStart', (action) => {
+      if (action === 'dash') this.startDash()
+    })
+  }
+
+  startDash() {
+    if (this.dash.cooldown > 0) return
+
+    // Dash toward the held direction, or straight ahead when no direction is held
+    if (this.targetVelocity.lengthSq() > 0) this.dash.direction.copy(this.targetVelocity).normalize()
+    else this.dash.direction.set(Math.sin(this.yaw), 0, Math.cos(this.yaw))
+
+    // Snap to face the dash direction (shortest way round) so the stretch points the right way
+    const targetYaw = Math.atan2(this.dash.direction.x, this.dash.direction.z)
+    this.yaw += Math.atan2(Math.sin(targetYaw - this.yaw), Math.cos(targetYaw - this.yaw))
+
+    this.dash.timer = this.params.dashDuration
+    this.dash.cooldown = this.params.dashDuration + this.params.dashCooldown
+    this.dash.ghostTimer = 0
+
+    this.dust.spawn(this.group.position, this.dash.direction)
+    this.experience.camera.kick(6)
+  }
+
+  updateDash(delta) {
+    this.dash.cooldown = Math.max(this.dash.cooldown - delta, 0)
+
+    if (this.dash.timer > 0) {
+      this.dash.timer -= delta
+      this.dash.ghostTimer -= delta
+      if (this.dash.ghostTimer <= 0) {
+        this.afterimages.spawn(this.body)
+        this.dash.ghostTimer = 0.035
+      }
+    }
+
+    // Substeps keep the stiff spring stable on slow frames
+    const target = this.dash.timer > 0 ? 1 : 0
+    const steps = Math.ceil(delta / (1 / 120))
+    const step = delta / steps
+    for (let i = 0; i < steps; i++) {
+      const acceleration = (target - this.stretch.value) * 260 - this.stretch.velocity * 13
+      this.stretch.velocity += acceleration * step
+      this.stretch.value += this.stretch.velocity * step
+    }
+
+    this.afterimages.update(delta)
+    this.dust.update(delta)
+  }
+
   updateOutlineThickness() {
     for (const outline of this.outlines) {
       outline.scale.setScalar(outline.userData.radius + this.params.outlineThickness)
@@ -199,10 +271,15 @@ export default class Cloud {
     folder.add(this.params, 'turnSpeed', 0.5, 30, 0.1)
     folder.add(this.params, 'lean', 0, 0.5, 0.01)
     folder.add(this.params, 'bank', 0, 0.3, 0.01)
+    folder.add(this.params, 'dashSpeed', 4, 40, 0.1)
+    folder.add(this.params, 'dashDuration', 0.05, 0.6, 0.01)
+    folder.add(this.params, 'dashCooldown', 0, 2, 0.01)
+    folder.add(this.params, 'dashStretch', 0, 1, 0.01)
   }
 
   update() {
     this.updateMovement(this.time.delta)
+    this.updateDash(this.time.delta)
 
     const t = this.time.elapsed * this.params.floatSpeed
     const bank = THREE.MathUtils.clamp(-this.yawSpeed * this.params.bank, -0.35, 0.35)
@@ -212,6 +289,12 @@ export default class Cloud {
     this.group.rotation.y = this.yaw
     this.group.rotation.x = Math.sin(t * 0.4) * 0.03 + Math.min(this.speedRatio, 1.5) * this.params.lean
     this.group.rotation.z = Math.sin(t * 0.55) * 0.05 + bank
-    this.body.scale.set(1 + Math.sin(t * 2) * 0.015, 1 - Math.sin(t * 2) * 0.02, 1)
+    // Stretch along the heading (local z) while dashing, squash when the spring overshoots below 0
+    const stretch = this.stretch.value * this.params.dashStretch
+    this.body.scale.set(
+      (1 + Math.sin(t * 2) * 0.015) * (1 - stretch * 0.5),
+      (1 - Math.sin(t * 2) * 0.02) * (1 - stretch * 0.5),
+      1 + stretch
+    )
   }
 }

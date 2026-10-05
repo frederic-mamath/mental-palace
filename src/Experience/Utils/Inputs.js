@@ -8,6 +8,7 @@ const bindings = {
   left: ['KeyA', 'ArrowLeft'],
   right: ['KeyD', 'ArrowRight'],
   sprint: ['ShiftLeft', 'ShiftRight'],
+  dash: ['Space'],
 }
 
 export default class Inputs extends EventEmitter {

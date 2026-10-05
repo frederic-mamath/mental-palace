@@ -12,13 +12,15 @@ export default class Camera {
     this.target = null
     this.targetPreviousPosition = new THREE.Vector3()
     this.followDelta = new THREE.Vector3()
+    this.fovOffset = 0
 
     this.setInstance()
     this.setControls()
   }
 
   setInstance() {
-    this.instance = new THREE.PerspectiveCamera(35, this.sizes.width / this.sizes.height, 0.1, 100)
+    this.baseFov = 35
+    this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 100)
     this.instance.position.set(6, 4, 9)
     this.scene.add(this.instance)
   }
@@ -48,6 +50,20 @@ export default class Camera {
     this.targetPreviousPosition.copy(this.target.position)
   }
 
+  // Short field-of-view widening that settles back, for impacts and bursts of speed
+  kick(amount) {
+    this.fovOffset = Math.max(this.fovOffset, amount)
+  }
+
+  updateKick() {
+    if (this.fovOffset === 0) return
+
+    this.fovOffset *= Math.exp(-6 * this.experience.time.delta)
+    if (this.fovOffset < 0.01) this.fovOffset = 0
+    this.instance.fov = this.baseFov + this.fovOffset
+    this.instance.updateProjectionMatrix()
+  }
+
   resize() {
     this.instance.aspect = this.sizes.width / this.sizes.height
     this.instance.updateProjectionMatrix()
@@ -55,6 +71,7 @@ export default class Camera {
 
   update() {
     if (this.target) this.updateFollow()
+    this.updateKick()
     this.controls.update()
   }
 }

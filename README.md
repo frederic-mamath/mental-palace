@@ -18,6 +18,7 @@ Add `#debug` to the URL to open the lil-gui debug panel.
 | --- | --- |
 | Move | WASD (ZQSD on AZERTY) or arrow keys, relative to the camera |
 | Sprint | Shift |
+| Dash | Space (toward the held direction, or straight ahead) |
 | Orbit / zoom camera | Mouse drag / wheel |
 
 ## Structure
@@ -31,4 +32,5 @@ src/Experience/
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Floor, Cloud (main character), toon helpers
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
+    Effects/        reusable visual effects (Afterimages, DustBurst)
 ```
