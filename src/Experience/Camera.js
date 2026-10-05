@@ -9,6 +9,10 @@ export default class Camera {
     this.scene = this.experience.scene
     this.canvas = this.experience.canvas
 
+    this.target = null
+    this.targetPreviousPosition = new THREE.Vector3()
+    this.followDelta = new THREE.Vector3()
+
     this.setInstance()
     this.setControls()
   }
@@ -23,6 +27,25 @@ export default class Camera {
     this.controls = new OrbitControls(this.instance, this.canvas)
     this.controls.target.set(0, 1.5, 0)
     this.controls.enableDamping = true
+    this.controls.enablePan = false
+    this.controls.minDistance = 5
+    this.controls.maxDistance = 25
+    this.controls.maxPolarAngle = Math.PI * 0.45
+  }
+
+  // Keeps the orbit centered on `object` while preserving the user's orbit angle and zoom.
+  // Only follows on the horizontal plane so the character's bobbing doesn't shake the view.
+  follow(object) {
+    this.target = object
+    this.targetPreviousPosition.copy(object.position)
+  }
+
+  updateFollow() {
+    this.followDelta.subVectors(this.target.position, this.targetPreviousPosition)
+    this.followDelta.y = 0
+    this.instance.position.add(this.followDelta)
+    this.controls.target.add(this.followDelta)
+    this.targetPreviousPosition.copy(this.target.position)
   }
 
   resize() {
@@ -31,6 +54,7 @@ export default class Camera {
   }
 
   update() {
+    if (this.target) this.updateFollow()
     this.controls.update()
   }
 }

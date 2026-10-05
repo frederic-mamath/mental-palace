@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import Debug from './Utils/Debug.js'
 import Sizes from './Utils/Sizes.js'
 import Time from './Utils/Time.js'
+import Inputs from './Utils/Inputs.js'
 import Resources from './Utils/Resources.js'
 import Camera from './Camera.js'
 import Renderer from './Renderer.js'
@@ -23,6 +24,7 @@ export default class Experience {
     this.debug = new Debug()
     this.sizes = new Sizes()
     this.time = new Time()
+    this.inputs = new Inputs()
     this.scene = new THREE.Scene()
     this.resources = new Resources(sources)
     this.camera = new Camera()
@@ -39,14 +41,16 @@ export default class Experience {
   }
 
   update() {
-    this.camera.update()
+    // World first so the camera follows the character's position from this frame
     this.world.update()
+    this.camera.update()
     this.renderer.update()
   }
 
   destroy() {
     this.sizes.destroy()
     this.time.destroy()
+    this.inputs.destroy()
 
     this.scene.traverse((child) => {
       if (!(child instanceof THREE.Mesh)) return

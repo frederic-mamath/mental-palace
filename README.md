@@ -12,14 +12,22 @@ npm run build    # production build in dist/
 
 Add `#debug` to the URL to open the lil-gui debug panel.
 
+## Controls
+
+| Action | Keys |
+| --- | --- |
+| Move | WASD (ZQSD on AZERTY) or arrow keys, relative to the camera |
+| Sprint | Shift |
+| Orbit / zoom camera | Mouse drag / wheel |
+
 ## Structure
 
 ```
 src/Experience/
   Experience.js     singleton wiring everything together
-  Camera.js         perspective camera + OrbitControls
+  Camera.js         perspective camera + OrbitControls following the character
   Renderer.js       WebGL renderer
   sources.js        assets to preload (models, textures)
-  Utils/            EventEmitter, Sizes, Time, Resources, Debug
+  Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Floor, Cloud (main character), toon helpers
 ```

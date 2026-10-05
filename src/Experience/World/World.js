@@ -12,6 +12,7 @@ export default class World {
       this.environment = new Environment()
       this.floor = new Floor()
       this.cloud = new Cloud()
+      this.experience.camera.follow(this.cloud.group)
     })
   }
 
