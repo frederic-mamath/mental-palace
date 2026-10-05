@@ -14,6 +14,7 @@ import Flowers from './Decor/Flowers.js'
 import { createRandom } from './Decor/scatter.js'
 import { islands } from './islands.js'
 import WindField from './WindField.js'
+import City from './City/City.js'
 
 export default class World {
   constructor() {
@@ -27,6 +28,7 @@ export default class World {
       this.environment = new Environment()
       this.island = new Island({ shape: islands.entrepreneur })
       this.water = new Water({ islands: Object.values(islands) })
+      this.city = new City({ shape: islands.city, origin: islands.entrepreneur })
 
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })

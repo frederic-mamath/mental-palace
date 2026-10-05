@@ -42,4 +42,5 @@ src/Experience/
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
     Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
+    City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
 ```

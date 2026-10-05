@@ -67,6 +67,18 @@ export const islands = {
       [5, 0.05, 2.3],
     ],
   }),
+  // Paris-inspired city, 110 units north-west: in view behind the Double Tap phone from the spawn point.
+  // Its street grid and airport runway are aligned with the line between the two islands (the flight path).
+  city: new IslandShape({
+    name: 'city',
+    center: { x: -88, z: -66 },
+    radius: 30,
+    beachWidth: 0.8, // a narrow stone ledge along the quays, not a beach
+    harmonics: [
+      [2, 0.06, 1.1],
+      [3, 0.04, 0.2],
+    ],
+  }),
 }
 
 // GLSL `vec2 shoreline(vec2 p)`: x = distance from p to the nearest island's waterline (negative on land),

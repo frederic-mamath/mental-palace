@@ -3,10 +3,13 @@ import Experience from '../Experience.js'
 import { createGradientMap } from './toon.js'
 import { sea } from './islands.js'
 
+// Wild island colors: grass plateau, earthy cliffs, sand beach
+const wildPalette = { top: '#7fcf6b', cliff: '#b07a4f', shore: '#f2dca2' }
+
 // Land in two stacked slabs following an island's outline (an IslandShape from islands.js):
-// a grass plateau with rounded earthy cliffs, and a lower sand ring that sinks into the water.
+// a plateau with steep cliffs, and a lower shore ring (beach, quay ledge...) that sinks into the water.
 export default class Island {
-  constructor({ shape }) {
+  constructor({ shape, palette = wildPalette }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.debug = this.experience.debug
@@ -14,15 +17,15 @@ export default class Island {
 
     const gradientMap = createGradientMap()
     this.materials = {
-      grass: new THREE.MeshToonMaterial({ color: '#7fcf6b', gradientMap }),
-      cliff: new THREE.MeshToonMaterial({ color: '#b07a4f', gradientMap }),
-      sand: new THREE.MeshToonMaterial({ color: '#f2dca2', gradientMap }),
+      top: new THREE.MeshToonMaterial({ color: palette.top, gradientMap }),
+      cliff: new THREE.MeshToonMaterial({ color: palette.cliff, gradientMap }),
+      shore: new THREE.MeshToonMaterial({ color: palette.shore, gradientMap }),
     }
 
     // Plateau top sits at y = 0, where the character and landmarks stand
     // Small plateau bevel keeps the cliff steep; the beach bevel reaches full width right at the waterline
-    this.plateau = this.createSlab({ offset: 0, top: 0, bevel: 0.15 }, [this.materials.grass, this.materials.cliff])
-    this.beach = this.createSlab({ offset: shape.beachWidth, top: sea.waterLevel + 0.3, bevel: 0.3 }, this.materials.sand)
+    this.plateau = this.createSlab({ offset: 0, top: 0, bevel: 0.15 }, [this.materials.top, this.materials.cliff])
+    this.beach = this.createSlab({ offset: shape.beachWidth, top: sea.waterLevel + 0.3, bevel: 0.3 }, this.materials.shore)
 
     this.setDebug()
   }
@@ -65,8 +68,8 @@ export default class Island {
     if (!this.debug.active) return
 
     const folder = this.debug.ui.addFolder(`Island: ${this.shape.name}`)
-    folder.addColor(this.materials.grass, 'color').name('grass')
+    folder.addColor(this.materials.top, 'color').name('top')
     folder.addColor(this.materials.cliff, 'color').name('cliff')
-    folder.addColor(this.materials.sand, 'color').name('sand')
+    folder.addColor(this.materials.shore, 'color').name('shore')
   }
 }

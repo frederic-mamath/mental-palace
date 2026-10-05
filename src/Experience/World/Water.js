@@ -81,7 +81,7 @@ export default class Water {
       `,
     })
 
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), this.material)
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(900, 900), this.material)
     this.mesh.rotation.x = -Math.PI / 2
     this.mesh.position.y = sea.waterLevel
     this.scene.add(this.mesh)

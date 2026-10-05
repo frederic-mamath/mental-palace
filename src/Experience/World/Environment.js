@@ -16,8 +16,8 @@ export default class Environment {
   setSky() {
     this.skyColor = new THREE.Color('#8ecbff')
     this.scene.background = this.skyColor
-    // Far enough to see the whole island, close enough that the sea melts into the sky
-    this.scene.fog = new THREE.Fog(this.skyColor, 45, 140)
+    // Clear over the island, hazy at the city on the horizon, the open sea melting into the sky
+    this.scene.fog = new THREE.Fog(this.skyColor, 70, 240)
   }
 
   setLights() {

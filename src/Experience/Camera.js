@@ -27,7 +27,7 @@ export default class Camera {
 
   setInstance() {
     this.baseFov = 35
-    this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 250)
+    this.instance = new THREE.PerspectiveCamera(this.baseFov, this.sizes.width / this.sizes.height, 0.1, 450)
     // Pulled back and up so the island reads as a whole
     this.instance.position.set(16, 19, 25)
     this.scene.add(this.instance)
