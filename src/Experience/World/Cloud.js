@@ -162,11 +162,12 @@ export default class Cloud extends EventEmitter {
     this.nextBlink = 2
   }
 
-  // Golden goat horns curling back and down from the top of the head, tapering, with darker ridges
+  // Golden goat horns rising from the top of the head toward the sky with a gentle S-shaped wave, the tips
+  // flicking outward and back; thick at the base, tapering, with darker ridges
   setHorns() {
     const tubular = 32
     const radial = 10
-    const radiusAt = (t) => THREE.MathUtils.lerp(0.17, 0.035, Math.pow(t, 0.8))
+    const radiusAt = (t) => THREE.MathUtils.lerp(0.22, 0.06, Math.pow(t, 1.1))
     // A tube along `curve` whose radius follows radiusAt (+ grow, for the outline)
     const createHorn = (curve, grow) => {
       const geometry = new THREE.TubeGeometry(curve, tubular, 1, radial, false)
@@ -186,16 +187,17 @@ export default class Cloud extends EventEmitter {
 
     for (const side of [-1, 1]) {
       const curve = new THREE.CatmullRomCurve3(
-        [[0, 0, 0], [0.25, 0.3, -0.05], [0.55, 0.38, -0.3], [0.8, 0.2, -0.5], [0.92, -0.1, -0.42], [0.85, -0.32, -0.2]].map(
+        // x outward, y up, z back: up and out, a slight inward wave, then the tip bending out and back
+        [[0, 0, 0], [0.14, 0.3, 0.02], [0.3, 0.56, -0.04], [0.31, 0.82, -0.12], [0.46, 1.0, -0.2], [0.64, 1.06, -0.34]].map(
           ([x, y, z]) => new THREE.Vector3(x * side, y, z)
         )
       )
       const horn = new THREE.Group()
-      horn.position.set(0.55 * side, 0.6, 0.62)
+      horn.position.set(0.5 * side, 0.62, 0.5)
       horn.add(new THREE.Mesh(createHorn(curve, 0), this.materials.horn))
       horn.add(new THREE.Mesh(createHorn(curve, 0.035), this.materials.outline))
       // Ridges: thin dark rings around the horn
-      for (const t of [0.22, 0.45, 0.66]) {
+      for (const t of [0.2, 0.42, 0.62]) {
         const ridge = new THREE.Mesh(new THREE.TorusGeometry(radiusAt(t), 0.022, 6, 18), this.materials.ridge)
         curve.getPointAt(t, ridge.position)
         ridge.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), curve.getTangentAt(t))
