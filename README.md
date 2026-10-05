@@ -33,5 +33,6 @@ src/Experience/
   World/            World, Environment, Island, Water, Cloud (main character), toon helpers
                     islandShape.js: the coastline shared by land, water foam and movement limits
     Projects/       one landmark per project (DoubleTap: giant iPhone, north of spawn)
-    Effects/        reusable visual effects (Afterimages, DustBurst)
+    Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines)
+    Decor/          seeded scatter of grass, flowers, rocks and palm trees
 ```
