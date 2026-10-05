@@ -23,7 +23,8 @@ Add `#debug` to the URL to open the lil-gui debug panel.
 | Tap the project | E while it's open |
 | Close a project | Esc, click outside the card, or move |
 | Take the plane | Walk up to it, then E (or click it): flies to the other island |
-| Take the ship | At the pier's root, E: sails to the hobby island's cove and back |
+| Take the ship | At the middle of the pier, E: sails to the hobby island's cove and back |
+| Raid | On the Arena's rune circle, E: enters the raid instance. Dodge the red zones; Esc leaves, E retries |
 | Orbit / zoom camera | Mouse drag / wheel |
 
 ## Structure
@@ -35,7 +36,7 @@ src/Experience/
   Renderer.js       WebGL renderer
   sources.js        assets to preload (models, textures)
   projects.js       portfolio content: projects, and the hobby island's story beats (stories)
-  UI/               DOM overlays (InteractPrompt, ProjectCard)
+  UI/               DOM overlays (InteractPrompt, ProjectCard, RaidHud)
   Utils/            EventEmitter, Sizes, Time, Inputs, Resources, Debug
   World/            World, Environment, Island, Water, Cloud (main character), toon helpers
                     islands.js: island outlines (IslandShape) shared by land, water foam, decor and movement limits
@@ -51,5 +52,6 @@ src/Experience/
                     zone landmarks (TrainingGround, PirateCove, Arena, StoryMeadow), story beats (StoryStone)
     Airplane/       AF airliner model and its flights between the two runways
     Ship/           pirate ship model, its voyages to the hobby island's cove, and the piers
+    Raid/           raid boss mini-game: instance arena and boss, telegraphed attacks, game loop
     Transport/      vehicles between islands: Route (trips, turnaround, events) and Boarding (prompt, ring, poof, camera, drop-off)
 ```

@@ -2,6 +2,57 @@ import * as THREE from 'three'
 import Experience from '../../Experience.js'
 import { createGradientMap, addOutlined } from '../toon.js'
 
+// Glowing rune circle (concentric circles, glyphs, an eight-pointed star) on a transparent background;
+// shared by the Arena's raid platform and the raid instance
+export function createRuneTexture(color = '#7ee8ff') {
+  const size = 512
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  const c = size / 2
+  ctx.strokeStyle = color
+  ctx.fillStyle = color
+  ctx.lineWidth = 6
+  for (const r of [0.97, 0.78, 0.4]) {
+    ctx.beginPath()
+    ctx.arc(c, c, c * r, 0, Math.PI * 2)
+    ctx.stroke()
+  }
+  // Glyphs: small angular marks around the ring
+  ctx.lineWidth = 5
+  const glyphs = 24
+  for (let i = 0; i < glyphs; i++) {
+    const angle = (i / glyphs) * Math.PI * 2
+    ctx.save()
+    ctx.translate(c + Math.cos(angle) * c * 0.875, c + Math.sin(angle) * c * 0.875)
+    ctx.rotate(angle + Math.PI / 2)
+    ctx.beginPath()
+    const shape = i % 3
+    if (shape === 0) { ctx.moveTo(-10, 12); ctx.lineTo(0, -12); ctx.lineTo(10, 12) }
+    if (shape === 1) { ctx.moveTo(-10, -12); ctx.lineTo(10, -12); ctx.moveTo(0, -12); ctx.lineTo(0, 12) }
+    if (shape === 2) { ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.moveTo(-6, -12); ctx.lineTo(6, 12) }
+    ctx.stroke()
+    ctx.restore()
+  }
+  // Eight-pointed star in the middle: two squares, the second turned 45 degrees
+  for (const offset of [0, Math.PI / 4]) {
+    ctx.beginPath()
+    for (let i = 0; i <= 4; i++) {
+      const angle = offset + (i / 4) * Math.PI * 2
+      const x = c + Math.cos(angle) * c * 0.36
+      const y = c + Math.sin(angle) * c * 0.36
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.stroke()
+  }
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
+  return texture
+}
+
 // The hobby island's east zone, for online games (homages, no copied designs):
 // - a raid platform (WoW): round stone floor with a slowly turning glowing rune circle, ringed by rune
 //   obelisks crowned with floating crystals, open toward the path; walkable, it hosts the raid boss mini-game
@@ -60,7 +111,7 @@ export default class Arena {
     // Rune circle drawn on top, unlit so it glows, turning slowly
     this.runes = new THREE.Mesh(
       new THREE.CircleGeometry(radius * 0.92, 64).rotateX(-Math.PI / 2),
-      new THREE.MeshBasicMaterial({ map: this.createRuneTexture(), transparent: true, depthWrite: false })
+      new THREE.MeshBasicMaterial({ map: createRuneTexture(), transparent: true, depthWrite: false })
     )
     this.runes.position.set(center.x, 0.18, center.z)
     this.group.add(this.runes)
@@ -89,56 +140,6 @@ export default class Arena {
       this.addFloater(gem, 3.2, { bob: 0.1, speed: 1.4 })
       this.addCircle(new THREE.Vector3(x, 0, z), 0.5)
     }
-  }
-
-  // Concentric circles with runic glyphs between them, transparent elsewhere
-  createRuneTexture() {
-    const size = 512
-    const canvas = document.createElement('canvas')
-    canvas.width = size
-    canvas.height = size
-    const ctx = canvas.getContext('2d')
-    const c = size / 2
-    ctx.strokeStyle = '#7ee8ff'
-    ctx.fillStyle = '#7ee8ff'
-    ctx.lineWidth = 6
-    for (const r of [0.97, 0.78, 0.4]) {
-      ctx.beginPath()
-      ctx.arc(c, c, c * r, 0, Math.PI * 2)
-      ctx.stroke()
-    }
-    // Glyphs: small angular marks around the ring
-    ctx.lineWidth = 5
-    const glyphs = 24
-    for (let i = 0; i < glyphs; i++) {
-      const angle = (i / glyphs) * Math.PI * 2
-      ctx.save()
-      ctx.translate(c + Math.cos(angle) * c * 0.875, c + Math.sin(angle) * c * 0.875)
-      ctx.rotate(angle + Math.PI / 2)
-      ctx.beginPath()
-      const shape = i % 3
-      if (shape === 0) { ctx.moveTo(-10, 12); ctx.lineTo(0, -12); ctx.lineTo(10, 12) }
-      if (shape === 1) { ctx.moveTo(-10, -12); ctx.lineTo(10, -12); ctx.moveTo(0, -12); ctx.lineTo(0, 12) }
-      if (shape === 2) { ctx.moveTo(-10, 0); ctx.lineTo(10, 0); ctx.moveTo(-6, -12); ctx.lineTo(6, 12) }
-      ctx.stroke()
-      ctx.restore()
-    }
-    // Eight-pointed star in the middle: two squares, the second turned 45 degrees
-    for (const offset of [0, Math.PI / 4]) {
-      ctx.beginPath()
-      for (let i = 0; i <= 4; i++) {
-        const angle = offset + (i / 4) * Math.PI * 2
-        const x = c + Math.cos(angle) * c * 0.36
-        const y = c + Math.sin(angle) * c * 0.36
-        if (i === 0) ctx.moveTo(x, y)
-        else ctx.lineTo(x, y)
-      }
-      ctx.stroke()
-    }
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.anisotropy = 4
-    return texture
   }
 
   // Stone lane along z at x = laneX, from zStart to zEnd: a blue tower near the start, a red one near the end,

@@ -24,6 +24,7 @@ import Boarding from './Transport/Boarding.js'
 import Pier, { shoreAlong } from './Ship/Pier.js'
 import Ship from './Ship/Ship.js'
 import Voyage from './Ship/Voyage.js'
+import Raid from './Raid/Raid.js'
 import { createCityFrame } from './City/cityFrame.js'
 
 export default class World {
@@ -86,7 +87,11 @@ export default class World {
           cove: { island: islands.hobby, prompt: 'Sail back home', zone: this.seaRoute.zones.cove },
         },
       })
-      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.airFranceHangar, ...this.hobbyIsland.storyStones, this.boarding, this.shipBoarding] })
+      this.raid = new Raid({ entrance: this.hobbyIsland.arena.raid.center, homeIsland: islands.hobby, character: this.cloud })
+      this.interactions = new Interactions({
+        character: this.cloud,
+        landmarks: [this.doubleTap, this.airFranceHangar, ...this.hobbyIsland.storyStones, this.raid, this.boarding, this.shipBoarding],
+      })
       this.experience.camera.follow(this.cloud.group, { snap: true })
     })
   }
@@ -155,6 +160,7 @@ export default class World {
     this.boarding?.update()
     this.voyage?.update()
     this.shipBoarding?.update()
+    this.raid?.update()
     this.doubleTap?.update()
     this.airFranceHangar?.update()
     this.hobbyIsland?.update()
