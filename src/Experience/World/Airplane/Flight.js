@@ -77,6 +77,22 @@ export default class Flight extends EventEmitter {
     return this.trip !== null
   }
 
+  // Route interface for Transport/Boarding
+  get travelling() {
+    return this.flying
+  }
+
+  // Where a passenger steps out once the airplane has stopped: beside it, off the runway (terminal side in
+  // the city, away from the Double Tap phone on the airstrip), facing away from it, far enough to stay
+  // clear of the wingtips while it turns around
+  dropOff(stop) {
+    const side = stop === 'city' ? 1 : -1
+    return {
+      position: this.frame.toWorld(this.stops[stop].s, side * 5.5),
+      yaw: Math.atan2(this.frame.v.x * side, this.frame.v.y * side),
+    }
+  }
+
   // Where the airplane will land on its next trip
   get destination() {
     return this.trips[this.parkedAt].to

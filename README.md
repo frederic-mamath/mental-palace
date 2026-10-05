@@ -47,5 +47,6 @@ src/Experience/
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
     City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
     Hobby/          hobby island (shonen, online games, FF7): zones, paths, signpost, decor
-    Airplane/       AF airliner model, its flights between the two runways, and boarding
+    Airplane/       AF airliner model and its flights between the two runways
+    Transport/      boarding any vehicle between islands (prompt, ring, poof, camera follow, drop-off)
 ```
