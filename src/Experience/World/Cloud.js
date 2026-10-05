@@ -16,7 +16,7 @@ const idleActions = { forward: false, backward: false, left: false, right: false
 // Four bursts fanning out in every direction for the smoke poof
 const poofDirections = [new THREE.Vector3(1, 0, 0), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, -1)]
 
-// Events: 'dashStart' (position, direction)
+// Events: 'dashStart' (position, direction), 'teleport' (position)
 export default class Cloud extends EventEmitter {
   constructor() {
     super()
@@ -184,23 +184,66 @@ export default class Cloud extends EventEmitter {
   }
 
   // Push out of overlapping colliders and drop the velocity going into them, so the cloud slides around
+  // Colliders are circles { position, radius } or rectangles { position, axis (unit Vector2 along their
+  // length), halfLength, halfWidth } on the ground plane. Each one only computes how deep the cloud is in it
+  // and which way out; pushing out and removing the velocity going into it is shared.
   resolveCollisions() {
     const position = this.group.position
+    const radius = this.params.collisionRadius
 
     for (const collider of this.colliders) {
       // Moving colliders (the airplane once airborne) can switch themselves off
       if (collider.disabled) continue
-      this.pushDirection.set(position.x - collider.position.x, 0, position.z - collider.position.z)
-      const distance = this.pushDirection.length()
-      const minDistance = collider.radius + this.params.collisionRadius
-      if (distance >= minDistance || distance === 0) continue
 
-      this.pushDirection.divideScalar(distance)
-      position.addScaledVector(this.pushDirection, minDistance - distance)
+      const depth = collider.axis ? this.rectanglePush(collider, radius) : this.circlePush(collider, radius)
+      if (depth <= 0) continue
 
+      position.addScaledVector(this.pushDirection, depth)
       const into = this.velocity.dot(this.pushDirection)
       if (into < 0) this.velocity.addScaledVector(this.pushDirection, -into)
     }
+  }
+
+  // Sets pushDirection and returns the overlap depth (0 when clear)
+  circlePush(collider, radius) {
+    const position = this.group.position
+    this.pushDirection.set(position.x - collider.position.x, 0, position.z - collider.position.z)
+    const distance = this.pushDirection.length()
+    const minDistance = collider.radius + radius
+    if (distance >= minDistance || distance === 0) return 0
+
+    this.pushDirection.divideScalar(distance)
+    return minDistance - distance
+  }
+
+  rectanglePush(collider, radius) {
+    const { position: center, axis, halfLength, halfWidth } = collider
+    const dx = this.group.position.x - center.x
+    const dz = this.group.position.z - center.z
+    // In the rectangle's frame: along its axis, and across it (axis turned a quarter)
+    const along = dx * axis.x + dz * axis.y
+    const across = -dx * axis.y + dz * axis.x
+    const toWorld = (a, c) => this.pushDirection.set(a * axis.x - c * axis.y, 0, a * axis.y + c * axis.x)
+
+    const outsideAlong = along - THREE.MathUtils.clamp(along, -halfLength, halfLength)
+    const outsideAcross = across - THREE.MathUtils.clamp(across, -halfWidth, halfWidth)
+    const distance = Math.hypot(outsideAlong, outsideAcross)
+
+    if (distance > 0) {
+      if (distance >= radius) return 0
+      toWorld(outsideAlong / distance, outsideAcross / distance)
+      return radius - distance
+    }
+
+    // Center inside the rectangle (fast dash): leave through the nearest side
+    const depthAlong = halfLength - Math.abs(along)
+    const depthAcross = halfWidth - Math.abs(across)
+    if (depthAlong < depthAcross) {
+      toWorld(Math.sign(along) || 1, 0)
+      return depthAlong + radius
+    }
+    toWorld(0, Math.sign(across) || 1)
+    return depthAcross + radius
   }
 
   setDash() {
@@ -216,6 +259,16 @@ export default class Cloud extends EventEmitter {
     this.inputs.on('actionStart', (action) => {
       if (action === 'dash') this.startDash()
     })
+  }
+
+  // Jump straight to another spot (and island), at rest, facing `yaw`. Events: 'teleport'
+  teleport(position, { island = this.island, yaw = this.yaw } = {}) {
+    this.group.position.copy(position)
+    this.island = island
+    this.velocity.set(0, 0, 0)
+    this.yaw = yaw
+    this.yawSpeed = 0
+    this.trigger('teleport', this.group.position)
   }
 
   // Ninja smoke poof: vanish while a project is open (it would block the camera's view), reappear after

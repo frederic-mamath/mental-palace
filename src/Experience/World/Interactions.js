@@ -7,9 +7,11 @@ const movementActions = new Set(['forward', 'backward', 'left', 'right', 'dash']
 // Pointer travel (px) under which a press counts as a click rather than an orbit drag
 const clickTolerance = 6
 
-// Connects the character to project landmarks (see the interface documented in Projects/DoubleTap.js):
+// Connects the character to landmarks (see the interface documented in Projects/DoubleTap.js):
 // walking into a landmark's zone shows a prompt; E, clicking the prompt or clicking the landmark opens it
 // (camera focus + project card); E again taps it; Esc, the backdrop, the close button or moving closes it.
+// Landmarks may also define `available` (false hides them), `promptLabel`, and `interact()` to run their
+// own action instead of opening a card (the airplane's boarding).
 export default class Interactions {
   constructor({ character, landmarks }) {
     this.experience = new Experience()
@@ -60,13 +62,21 @@ export default class Interactions {
 
       this.pointer.set((event.clientX / this.sizes.width) * 2 - 1, -(event.clientY / this.sizes.height) * 2 + 1)
       this.raycaster.setFromCamera(this.pointer, this.camera.instance)
-      const landmark = this.landmarks.find((candidate) => this.raycaster.intersectObjects(candidate.pickTargets, true).length > 0)
+      const landmark = this.landmarks.find(
+        (candidate) => candidate.available !== false && this.raycaster.intersectObjects(candidate.pickTargets, true).length > 0
+      )
       if (landmark) this.openLandmark(landmark)
     })
   }
 
   openLandmark(landmark) {
     if (this.open) return
+
+    if (landmark.interact) {
+      this.prompt.hide()
+      landmark.interact()
+      return
+    }
 
     this.open = landmark
     this.inputs.movementLocked = true
@@ -87,7 +97,11 @@ export default class Interactions {
     this.card.hide()
     this.camera.unfocus()
     // Still standing in the zone: offer to reopen
-    if (this.active) this.prompt.show(`Open ${this.active.project.title}`)
+    if (this.active) this.prompt.show(this.labelFor(this.active))
+  }
+
+  labelFor(landmark) {
+    return landmark.promptLabel ?? `Open ${landmark.project.title}`
   }
 
   // Closest landmark whose zone contains the character, if any
@@ -96,7 +110,11 @@ export default class Interactions {
     let closest = null
     let closestDistance = Infinity
 
+    // Nothing to offer while the character is hidden (flying, or a project is open)
+    if (!this.character.group.visible) return null
+
     for (const landmark of this.landmarks) {
+      if (landmark.available === false) continue
       const { position: center, radius } = landmark.zone
       const distance = Math.hypot(position.x - center.x, position.z - center.z)
       if (distance < radius && distance < closestDistance) {
@@ -116,7 +134,7 @@ export default class Interactions {
       this.active?.setActive(false)
       active?.setActive(true)
       this.active = active
-      if (active) this.prompt.show(`Open ${active.project.title}`)
+      if (active) this.prompt.show(this.labelFor(active))
       else this.prompt.hide()
     }
 

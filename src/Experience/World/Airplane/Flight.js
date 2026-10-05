@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import Experience from '../../Experience.js'
+import EventEmitter from '../../Utils/EventEmitter.js'
 
 const smoothstep = (t) => t * t * (3 - 2 * t)
 const easings = {
@@ -19,16 +20,19 @@ const profile = {
   climbSpeed: 8,
   cruiseSpeed: 7,
   approachSpeed: 7.5,
-  hold: 2.5, // seconds parked at each end
-  turn: 2.4, // seconds to turn around on the runway
+  turn: 2.4, // seconds to turn around on the runway after landing
 }
 
-// Scripted round trip between the airstrip and the city runway. Both lie on the same straight line
-// (the flight frame's u axis), so the whole trip is described by a distance along that line (s), an
-// altitude, and a sideways offset for the curve over the sea. The schedule loops:
-// hold, take-off roll, climb, cruise, approach, rollout, turn around, then the same way back.
-export default class Flight {
+// The airplane's trips between the airstrip ('airstrip') and the city runway ('city'). Both lie on the
+// same straight line (the flight frame's u axis), so a trip is described by a distance along that line (s),
+// an altitude, and a sideways offset for the curve over the sea.
+//
+// The airplane waits parked, facing the way back, until depart() sends it on its next trip:
+// take-off roll, climb, cruise, approach, rollout, turn around. Events: 'arrived' (stop name).
+export default class Flight extends EventEmitter {
   constructor({ airplane, airstrip, city, colliders }) {
+    super()
+
     this.experience = new Experience()
     this.time = this.experience.time
 
@@ -39,26 +43,21 @@ export default class Flight {
     const cityRunwayStart = city.frame.toWorld(city.runway.start, 0)
     const cityStart = this.frame.toFrame(cityRunwayStart.x, cityRunwayStart.z).along
     this.stops = {
-      airstrip: airstrip.start + 1,
-      airstripTouchdown: airstrip.end - 1,
-      cityTouchdown: cityStart + 1,
-      city: cityStart + city.runway.length - 2,
+      airstrip: { s: airstrip.start + 1, heading: 0 }, // parked facing the city
+      city: { s: cityStart + city.runway.length - 2, heading: Math.PI }, // parked facing home
     }
 
-    this.phases = [
-      ...this.createTrip({ from: this.stops.airstrip, touchdown: this.stops.cityTouchdown, to: this.stops.city, direction: 1, heading: 0, name: 'outbound' }),
-      ...this.createTrip({ from: this.stops.city, touchdown: this.stops.airstripTouchdown, to: this.stops.airstrip, direction: -1, heading: Math.PI, name: 'return' }),
-    ]
-    let start = 0
-    for (const phase of this.phases) {
-      phase.start = start
-      start += phase.duration
+    this.trips = {
+      airstrip: this.createTrip({ from: 'airstrip', to: 'city', touchdown: cityStart + 1, direction: 1 }),
+      city: this.createTrip({ from: 'city', to: 'airstrip', touchdown: airstrip.end - 1, direction: -1 }),
     }
-    this.duration = start
+
+    this.parkedAt = 'airstrip'
+    this.trip = null
     this.elapsed = 0
 
     this.forward = new THREE.Vector3()
-    this.lastForward = new THREE.Vector3(this.frame.u.x, 0, this.frame.u.y)
+    this.lastForward = new THREE.Vector3()
     this.bank = 0
     this.gear = 1
     this.sample = { position: new THREE.Vector3(), ahead: new THREE.Vector3(), behind: new THREE.Vector3() }
@@ -70,10 +69,27 @@ export default class Flight {
     this.update()
   }
 
-  // One leg, from parked at `from` to parked at `to` facing back: durations follow from distances and speeds
-  createTrip({ from, touchdown, to, direction, heading, name }) {
+  get flying() {
+    return this.trip !== null
+  }
+
+  // Where the airplane will land on its next trip
+  get destination() {
+    return this.trips[this.parkedAt].to
+  }
+
+  depart() {
+    if (this.trip) return
+    this.trip = this.trips[this.parkedAt]
+    this.elapsed = 0
+  }
+
+  // One trip from parked at `from` to parked at `to`, facing back: durations follow from distances and speeds
+  createTrip({ from, to, touchdown, direction }) {
     const d = direction
-    const liftOff = from + d * profile.takeoffRoll
+    const start = this.stops[from].s
+    const stop = this.stops[to].s
+    const liftOff = start + d * profile.takeoffRoll
     const climbEnd = liftOff + d * profile.climbDistance
     const approachStart = touchdown - d * profile.approachDistance
     const cruise = profile.cruiseAltitude
@@ -83,28 +99,39 @@ export default class Flight {
       return d * profile.detour * Math.sin(Math.PI * x) ** 2
     }
     const ground = () => 0
+    const heading = this.stops[from].heading
 
-    return [
-      { name: `${name}:hold`, duration: profile.hold, s: [from, from], altitude: ground, lateral },
-      { name: `${name}:takeoff`, duration: (2 * profile.takeoffRoll) / profile.rollSpeed, s: [from, liftOff], ease: 'accelerate', altitude: ground, lateral },
-      { name: `${name}:climb`, duration: profile.climbDistance / profile.climbSpeed, s: [liftOff, climbEnd], altitude: (t) => cruise * smoothstep(t), lateral },
-      { name: `${name}:cruise`, duration: Math.abs(approachStart - climbEnd) / profile.cruiseSpeed, s: [climbEnd, approachStart], altitude: () => cruise, lateral },
-      { name: `${name}:approach`, duration: profile.approachDistance / profile.approachSpeed, s: [approachStart, touchdown], altitude: (t) => cruise * (1 - smoothstep(t)), lateral },
-      { name: `${name}:rollout`, duration: (2 * Math.abs(to - touchdown)) / profile.rollSpeed, s: [touchdown, to], ease: 'decelerate', altitude: ground, lateral },
+    const phases = [
+      { name: 'takeoff', duration: (2 * profile.takeoffRoll) / profile.rollSpeed, s: [start, liftOff], ease: 'accelerate', altitude: ground },
+      { name: 'climb', duration: profile.climbDistance / profile.climbSpeed, s: [liftOff, climbEnd], altitude: (t) => cruise * smoothstep(t) },
+      { name: 'cruise', duration: Math.abs(approachStart - climbEnd) / profile.cruiseSpeed, s: [climbEnd, approachStart], altitude: () => cruise },
+      { name: 'approach', duration: profile.approachDistance / profile.approachSpeed, s: [approachStart, touchdown], altitude: (t) => cruise * (1 - smoothstep(t)) },
+      { name: 'rollout', duration: (2 * Math.abs(stop - touchdown)) / profile.rollSpeed, s: [touchdown, stop], ease: 'decelerate', altitude: ground },
       // Turn around in place to face the way back (heading measured from +u toward +v)
-      { name: `${name}:turn`, duration: profile.turn, s: [to, to], altitude: ground, lateral, heading: [heading, heading + Math.PI] },
+      { name: 'turn', duration: profile.turn, s: [stop, stop], altitude: ground, heading: [heading, heading + Math.PI] },
     ]
+
+    let elapsed = 0
+    for (const phase of phases) {
+      phase.lateral = lateral
+      phase.start = elapsed
+      elapsed += phase.duration
+    }
+    return { from, to, phases, duration: elapsed }
   }
 
-  phaseAt(time) {
-    const t = ((time % this.duration) + this.duration) % this.duration
-    const phase = this.phases.find((candidate) => t < candidate.start + candidate.duration) ?? this.phases.at(-1)
-    return { phase, progress: (t - phase.start) / phase.duration }
-  }
-
-  // World position of the airplane's center at `time`; also returns the heading for in-place turns
+  // World position of the airplane's center `time` seconds into the current trip (or parked);
+  // also returns the explicit heading when there is one (parked, turning)
   positionAt(time, target) {
-    const { phase, progress } = this.phaseAt(time)
+    if (!this.trip) {
+      const stop = this.stops[this.parkedAt]
+      this.frame.toWorld(stop.s, 0, this.airplane.groundClearance, target)
+      return { phase: null, altitude: 0, heading: stop.heading }
+    }
+
+    const t = THREE.MathUtils.clamp(time, 0, this.trip.duration)
+    const phase = this.trip.phases.find((candidate) => t < candidate.start + candidate.duration) ?? this.trip.phases.at(-1)
+    const progress = Math.min((t - phase.start) / phase.duration, 1)
     const s = THREE.MathUtils.lerp(phase.s[0], phase.s[1], easings[phase.ease ?? 'linear'](progress))
     const altitude = phase.altitude(progress)
     this.frame.toWorld(s, phase.lateral(s), this.airplane.groundClearance + altitude, target)
@@ -114,14 +141,22 @@ export default class Flight {
 
   update() {
     const delta = this.time.delta
-    this.elapsed += delta
+
+    if (this.trip) {
+      this.elapsed += delta
+      if (this.elapsed >= this.trip.duration) {
+        this.parkedAt = this.trip.to
+        this.trip = null
+        this.trigger('arrived', this.parkedAt)
+      }
+    }
 
     const { position, ahead, behind } = this.sample
     const { phase, altitude, heading } = this.positionAt(this.elapsed, position)
     this.phase = phase
 
-    // Facing: an explicit heading while turning on the ground, otherwise the direction of travel
-    // (including climb and descent, which pitches the nose); keep the last one while parked
+    // Facing: the explicit heading when parked or turning, otherwise the direction of travel
+    // (including climb and descent, which pitches the nose)
     if (heading !== null) {
       this.forward.set(this.frame.u.x * Math.cos(heading) + this.frame.v.x * Math.sin(heading), 0, this.frame.u.y * Math.cos(heading) + this.frame.v.y * Math.sin(heading))
       this.lastForward.copy(this.forward)

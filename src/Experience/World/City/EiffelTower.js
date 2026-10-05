@@ -40,6 +40,12 @@ export default class EiffelTower {
     this.slab(1.0, 0.4, 16.6)
     this.beam(new THREE.Vector3(0, 16.8, 0), new THREE.Vector3(0, 18.6, 0), 0.12, 0.05)
 
+    this.group.updateWorldMatrix(true, false)
+    this.legColliders = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([sx, sz]) => ({
+      position: this.group.localToWorld(new THREE.Vector3(sx * 3.2, 0, sz * 3.2)),
+      radius: 0.8,
+    }))
+
     this.group.traverse((child) => {
       if (child.isMesh && child.material === this.material) child.castShadow = true
     })

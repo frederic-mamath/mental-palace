@@ -33,6 +33,8 @@ export default class City {
     this.outlineMaterial = createOutlineMaterial()
 
     this.island = new Island({ shape, palette: { top: '#767a85', cliff: '#cdbf9f', shore: '#b3a589' } })
+    // Obstacles for the character once it lands here (added to the world's colliders by World)
+    this.colliders = []
 
     // Runway starts just inside the quay facing the entrepreneur island and runs inland (+u)
     const edge = shape.radiusAt(shape.angleOf(origin.center.x, origin.center.z))
@@ -40,6 +42,7 @@ export default class City {
     // Runway, apron and terminal (+v side), control tower (-v side)
     this.airportZone = { minAlong: -Infinity, maxAlong: this.runway.start + this.runway.length + 2, minAcross: -9, maxAcross: 15 }
     this.airport = new Airport({ frame: this.frame, runway: this.runway })
+    this.colliders.push(...this.airport.colliders)
 
     this.blocks = this.layoutBlocks()
     this.setBlocks()
@@ -119,6 +122,9 @@ export default class City {
     this.blocks.forEach((lot, i) => {
       this.frame.toWorld(lot.along, lot.across, 0, position)
       sidewalks.setMatrixAt(i, matrix.compose(position, quaternion, scale.set(lot.size, 1, lot.size)))
+      // The buildings stand just inside the sidewalk's edge
+      const half = lot.size / 2 - 0.3
+      this.colliders.push({ position: position.clone(), axis: this.frame.u, halfLength: half, halfWidth: half })
     })
     sidewalks.receiveShadow = true
     this.scene.add(sidewalks)
@@ -178,6 +184,7 @@ export default class City {
     spots.forEach(([along, across], i) => {
       const size = range(this.random, 0.85, 1.15)
       this.frame.toWorld(along, across, 0, position)
+      this.colliders.push({ position: position.clone(), radius: 0.5 })
       trunks.setMatrixAt(i, matrix.compose(position, quaternion, scale.set(size, size, size)))
 
       position.y = 2.3 * size
@@ -200,6 +207,7 @@ export default class City {
     const group = new THREE.Group()
     this.frame.toWorld(place.along, place.across, 0, group.position)
     this.scene.add(group)
+    this.colliders.push({ position: group.position.clone(), radius: 1.3 })
 
     const stone = new THREE.MeshToonMaterial({ color: '#d8cdb6', gradientMap: this.gradientMap })
     const bronze = new THREE.MeshToonMaterial({ color: '#4f6b5c', gradientMap: this.gradientMap })
@@ -253,5 +261,7 @@ export default class City {
     group.add(lawn, path)
 
     this.eiffelTower = new EiffelTower({ position: group.position.clone(), yaw: this.frame.yaw })
+    // Only the legs block: the cloud can float under the tower
+    this.colliders.push(...this.eiffelTower.legColliders)
   }
 }

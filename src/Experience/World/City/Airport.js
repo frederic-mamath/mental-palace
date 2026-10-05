@@ -14,6 +14,7 @@ export default class Airport {
     this.runway = runway
     this.gradientMap = createGradientMap()
     this.outlineMaterial = createOutlineMaterial()
+    this.colliders = []
 
     this.setRunway()
     this.setApron()
@@ -100,6 +101,7 @@ export default class Airport {
   setTerminal() {
     const { start, length } = this.runway
     const group = this.place(start + length / 2, 10)
+    this.colliders.push({ position: group.position.clone(), radius: 4.3 })
     this.addCylinder(group, { radius: 4, height: 2.6, color: '#ddd7ca' })
     // Glass band around the middle, slightly proud of the concrete
     this.addCylinder(group, { radius: 4.06, height: 0.9, bottom: 0.9, color: '#7fb6d9', outline: false })
@@ -109,6 +111,7 @@ export default class Airport {
   setControlTower() {
     const { start, length } = this.runway
     const group = this.place(start + length * 0.72, -6.5)
+    this.colliders.push({ position: group.position.clone(), radius: 1.4 })
     this.addCylinder(group, { radius: 0.55, height: 7, color: '#ddd7ca', radialSegments: 16 })
     this.addCylinder(group, { radius: 1.25, height: 1.2, bottom: 7, color: '#7fb6d9', radialSegments: 16 })
     this.addCylinder(group, { radius: 1.4, height: 0.25, bottom: 8.2, color: '#bdb6a8', radialSegments: 16 })

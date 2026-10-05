@@ -44,19 +44,26 @@ export default class Camera {
   }
 
   // Keeps the orbit centered on `object` while preserving the user's orbit angle and zoom.
-  // Only follows on the horizontal plane so the character's bobbing doesn't shake the view.
-  follow(object) {
+  // By default only follows on the horizontal plane, so the character's bobbing doesn't shake the view;
+  // `vertical` also follows height changes (the airplane climbing). Switching targets glides over unless
+  // `snap` is set.
+  follow(object, { vertical = false, snap = false } = {}) {
     this.target = object
-    this.followPosition.copy(object.position)
+    this.followVertical = vertical
+    if (snap) this.followPosition.copy(object.position)
+    // Measure height changes from where the view is now, so following a lower object doesn't drop the camera
+    this.followHeightOffset = this.followPosition.y - object.position.y
   }
 
   updateFollow() {
     const easing = 1 - Math.exp(-this.followSpeed * this.experience.time.delta)
+    const goal = this.target.position
 
     this.followDelta.copy(this.followPosition)
-    this.followPosition.lerp(this.target.position, easing)
+    this.followPosition.x += (goal.x - this.followPosition.x) * easing
+    this.followPosition.z += (goal.z - this.followPosition.z) * easing
+    if (this.followVertical) this.followPosition.y += (goal.y + this.followHeightOffset - this.followPosition.y) * easing
     this.followDelta.subVectors(this.followPosition, this.followDelta)
-    this.followDelta.y = 0
 
     this.instance.position.add(this.followDelta)
     this.controls.target.add(this.followDelta)

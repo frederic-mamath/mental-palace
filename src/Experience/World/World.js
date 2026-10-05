@@ -18,6 +18,7 @@ import City from './City/City.js'
 import Airstrip from './Airstrip.js'
 import Airplane from './Airplane/Airplane.js'
 import Flight from './Airplane/Flight.js'
+import Boarding from './Airplane/Boarding.js'
 
 export default class World {
   constructor() {
@@ -45,10 +46,14 @@ export default class World {
       this.airplane = new Airplane()
       this.flight = new Flight({ airplane: this.airplane, airstrip: this.airstrip, city: this.city, colliders: this.colliders })
 
+      // City obstacles, for when the cloud flies over (added after the decor, like every late collider)
+      this.colliders.push(...this.city.colliders)
+
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
-      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap] })
-      this.experience.camera.follow(this.cloud.group)
+      this.boarding = new Boarding({ flight: this.flight, airplane: this.airplane, character: this.cloud })
+      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.boarding] })
+      this.experience.camera.follow(this.cloud.group, { snap: true })
     })
   }
 

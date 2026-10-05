@@ -22,6 +22,8 @@ export default class WindField {
 
     windUniforms.uPusherTrail.value.copy(character.group.position)
     character.on('dashStart', (position) => this.startShockwave(position))
+    // Don't let the wake sweep across the sea after a jump to another island
+    character.on('teleport', (position) => windUniforms.uPusherTrail.value.copy(position))
 
     this.setDebug()
   }

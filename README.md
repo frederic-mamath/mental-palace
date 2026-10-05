@@ -22,6 +22,7 @@ Add `#debug` to the URL to open the lil-gui debug panel.
 | Open a project | Walk into its ring, then E (or click the landmark / the prompt) |
 | Tap the project | E while it's open |
 | Close a project | Esc, click outside the card, or move |
+| Take the plane | Walk up to it, then E (or click it): flies to the other island |
 | Orbit / zoom camera | Mouse drag / wheel |
 
 ## Structure
@@ -44,5 +45,5 @@ src/Experience/
     Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
     City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
-    Airplane/       AF airliner model and its scripted round trip between the two runways
+    Airplane/       AF airliner model, its flights between the two runways, and boarding
 ```
