@@ -43,7 +43,7 @@ export default class DoubleTap {
 
     this.materials = {
       body: new THREE.MeshToonMaterial({ color: this.params.bodyColor, gradientMap }),
-      stone: new THREE.MeshToonMaterial({ color: '#a3acc2', gradientMap, flatShading: true }),
+      stone: new THREE.MeshToonMaterial({ color: '#a3acc2', gradientMap }),
       dark: new THREE.MeshToonMaterial({ color: '#1e1d33', gradientMap }),
       lens: new THREE.MeshBasicMaterial({ color: '#0b0a14' }),
       outline: createOutlineMaterial(),
@@ -54,7 +54,10 @@ export default class DoubleTap {
     const { radiusTop, radiusBottom, height } = this.pedestal
     const t = this.params.outlineThickness
 
-    const stone = new THREE.Mesh(new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 8), this.materials.stone)
+    // MeshToonMaterial has no flatShading: unshared vertices give each face its own normal for the faceted look
+    const stoneGeometry = new THREE.CylinderGeometry(radiusTop, radiusBottom, height, 8).toNonIndexed()
+    stoneGeometry.computeVertexNormals()
+    const stone = new THREE.Mesh(stoneGeometry, this.materials.stone)
     stone.position.y = height / 2
     stone.castShadow = true
     stone.receiveShadow = true
