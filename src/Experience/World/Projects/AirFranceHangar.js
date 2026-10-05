@@ -55,7 +55,7 @@ export default class AirFranceHangar {
     this.setRecords()
     this.setScreen()
     this.setSheets()
-    this.ring = new ZoneRing({ parent: this.front, radius: 3.1, color: project.accent })
+    this.ring = new ZoneRing({ parent: this.front, radius: 3.1, kind: 'experience' })
 
     this.group.traverse((child) => {
       if (child.isMesh && child.material !== this.outlineMaterial && !child.userData.noShadow) {

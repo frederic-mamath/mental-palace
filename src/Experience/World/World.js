@@ -69,7 +69,6 @@ export default class World {
         route: this.flight,
         vehicle: this.airplane.group,
         character: this.cloud,
-        ringColor: '#d6202f', // the livery's red reads on both grass and asphalt
         stops: {
           airstrip: { island: islands.entrepreneur, prompt: 'Board AF flight to Paris' },
           city: { island: islands.city, prompt: 'Fly back to the island' },
@@ -79,7 +78,6 @@ export default class World {
         route: this.voyage,
         vehicle: this.ship.group,
         character: this.cloud,
-        ringColor: '#f2c14e', // straw-hat yellow
         ringRadius: 2.4,
         promptHeight: 2.4,
         followVertical: false, // don't bob the camera with the waves

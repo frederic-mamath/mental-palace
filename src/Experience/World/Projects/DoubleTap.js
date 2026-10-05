@@ -286,7 +286,7 @@ export default class DoubleTap {
   }
 
   setEffects() {
-    this.zoneRing = new ZoneRing({ parent: this.group, radius: 4.6, color: this.params.accent })
+    this.zoneRing = new ZoneRing({ parent: this.group, radius: 4.6, kind: 'experience' })
     this.hearts = new HeartPop({ parent: this.phone })
   }
 

@@ -1,27 +1,37 @@
 import * as THREE from 'three'
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
+import { interactionKinds } from '../interactionKinds.js'
 
-// Flat ring on the ground marking an interaction zone. Faint at rest; brightens and sends
-// pulses inward when the character is inside (setActive).
+// Flat ring on the ground marking an interaction zone, styled by its kind (see interactionKinds.js).
+// Faint at rest; brightens when the character is inside (setActive). Solid rings then send pulses inward;
+// dashed rings turn, faster when active.
 export default class ZoneRing {
-  constructor({ parent, radius, color = '#ffffff', y = 0.04 }) {
+  constructor({ parent, radius, kind = 'experience', y = 0.04 }) {
+    const { color, ringStyle } = interactionKinds[kind]
     this.radius = radius
+    this.dashed = ringStyle === 'dashed'
     this.activity = 0
     this.target = 0
 
-    const geometry = new THREE.RingGeometry(0.94, 1, 96)
-    const createRing = () => {
-      const ring = new THREE.Mesh(
-        geometry,
-        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false })
-      )
+    const createRing = (geometry) => {
+      const ring = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false }))
       ring.rotation.x = -Math.PI / 2
       ring.position.y = y
       parent.add(ring)
       return ring
     }
 
-    this.ring = createRing()
-    this.pulse = createRing()
+    if (this.dashed) {
+      // Dashes: short arcs filling 60% of the circumference
+      const dashes = 16
+      const slot = (Math.PI * 2) / dashes
+      const arcs = Array.from({ length: dashes }, (_, i) => new THREE.RingGeometry(0.92, 1, 6, 1, i * slot, slot * 0.6))
+      this.ring = createRing(mergeGeometries(arcs))
+    } else {
+      const geometry = new THREE.RingGeometry(0.94, 1, 96)
+      this.ring = createRing(geometry)
+      this.pulse = createRing(geometry)
+    }
   }
 
   setActive(active) {
@@ -33,6 +43,12 @@ export default class ZoneRing {
 
     this.ring.scale.setScalar(this.radius * (1 + Math.sin(elapsed * 3) * 0.015 * this.activity))
     this.ring.material.opacity = 0.3 + 0.6 * this.activity
+
+    if (this.dashed) {
+      // The ring lies flat (rotated onto the ground), so turning around its local z spins it on the ground
+      this.ring.rotation.z += delta * (0.25 + 0.9 * this.activity)
+      return
+    }
 
     const progress = (elapsed * 0.8) % 1
     this.pulse.scale.setScalar(this.radius * (1 - progress * 0.35))

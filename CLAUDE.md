@@ -21,7 +21,7 @@ Existing systems (all under `src/Experience/World/` unless noted):
 | System | Plug in by |
 | --- | --- |
 | Islands (`islands.js`) | adding an `IslandShape` (center, radius, harmonics, bays): land, water foam, movement limits and decor sampling follow |
-| Landmarks (`Interactions.js`) | implementing the interface documented in `Projects/DoubleTap.js` (zone, prompt anchor, focus pose, active/open/react), or `interact()` for a custom action; content in `projects.js`; camera framing via `Projects/focusPose.js` |
+| Landmarks (`Interactions.js`) | implementing the interface documented in `Projects/DoubleTap.js` (zone, prompt anchor, focus pose, active/open/react), or `interact()` for a custom action; content in `projects.js`; camera framing via `Projects/focusPose.js`; the zone's `ZoneRing` takes an interaction kind (`travel` / `experience`), never a color |
 | Transport (`Transport/Boarding.js`, `Transport/Route.js`) | a route extending `Route` (trips of phases along a flight frame, turnaround, `'landed'`/`'arrived'`) with its own phases, `applyPose` and `dropOff(stop)` (see `Airplane/Flight.js`), plus a vehicle object and stops config for `Boarding` |
 | Colliders (`Cloud.resolveCollisions`) | pushing circles `{ position, radius }` or rectangles `{ position, axis, halfLength, halfWidth }` (optional `disabled`) into `world.colliders`; walkable rectangles over the water into `world.walkways` |
 | Decor (`Decor/`) | Grass, Flowers, Rocks, PalmTrees with `island`, seeded `random`, `avoid`, `exclude` |
@@ -43,7 +43,7 @@ Shared vocabulary between the user and Claude. Use these words with these meanin
 - **Cloud**: the main character. **Dash**: Space burst with **afterimages**, **dust**, **speed lines**, **boom ring** and a **shockwave** in the grass. **Gust**: the stronger grass push while dashing. **Wake**: grass recovering behind the cloud. **Poof**: the smoke burst when the cloud hides or reappears.
 
 **Interaction**
-- **Landmark**: an object the character can interact with (Double Tap phone, Air France Industries hangar, a vehicle). **Interaction zone**: the circle where it becomes **active**. **Ring**: the ground circle showing that zone. **Prompt**: the floating "E · ..." bubble.
+- **Landmark**: an object the character can interact with (Double Tap phone, Air France Industries hangar, a vehicle). **Interaction zone**: the circle where it becomes **active**. **Ring**: the ground circle showing that zone, styled by its **interaction kind** (`interactionKinds.js`): **travel** = red dashed ring with rotating dashes (vehicles), **experience** = orange solid ring pulsing inward (projects, stories). **Prompt**: the floating "E · ..." bubble.
 - **Open**: interacting with a project landmark: the **focus** (camera glide to its **focus pose**), the dimmed **backdrop** and the **card** (project card: status band, summary, highlights, role, stack, lesson, links). **Tap / react**: pressing E while open. **Lesson**: the card's closing pull quote.
 - **Project**: an entry in `projects.js` shown on a card. **Story beat**: a hobby island card about how a story shaped the user.
 

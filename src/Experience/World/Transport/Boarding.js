@@ -13,7 +13,7 @@ import ZoneRing from '../Effects/ZoneRing.js'
 // floats offshore (ringHeight lifts the ring above a deck)
 // followVertical: whether the camera follows the vehicle's height changes during the trip
 export default class Boarding {
-  constructor({ route, vehicle, character, stops, ringColor, zoneRadius = 6.5, ringRadius = 6, promptHeight = 2.6, followVertical = true }) {
+  constructor({ route, vehicle, character, stops, zoneRadius = 6.5, ringRadius = 6, promptHeight = 2.6, followVertical = true }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -34,7 +34,7 @@ export default class Boarding {
     // Ground ring around the parked vehicle showing where boarding is offered; hidden while it can't be boarded
     this.ringAnchor = new THREE.Group()
     this.scene.add(this.ringAnchor)
-    this.ring = new ZoneRing({ parent: this.ringAnchor, radius: ringRadius, color: ringColor })
+    this.ring = new ZoneRing({ parent: this.ringAnchor, radius: ringRadius, kind: 'travel' })
   }
 
   get zone() {
