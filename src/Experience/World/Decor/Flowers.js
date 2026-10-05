@@ -7,12 +7,14 @@ import { range, sampleBand, scatter } from './scatter.js'
 // Patches of small flowers, one color per patch. Stems, petals and centers are three instanced meshes sharing matrices.
 export default class Flowers {
   // exclude(x, z): spots to leave bare (e.g. the airstrip); the random draws stay the same, so nothing else moves
-  constructor({ island, random, avoid, exclude = () => false, patches = 16 }) {
+  // `centers` places the patches yourself (a dense meadow) instead of scattering `patches` of them;
+  // `colors` overrides the palette
+  constructor({ island, random, avoid, exclude = () => false, patches = 16, centers: chosenCenters, colors = ['#ff7eb6', '#ffffff', '#ffd23f', '#b388ff', '#ff5c5c'] }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
-    const palette = ['#ff7eb6', '#ffffff', '#ffd23f', '#b388ff', '#ff5c5c'].map((color) => new THREE.Color(color))
-    const centers = scatter({ random, count: patches, sample: (r) => sampleBand(r, island, { to: -2.5 }), avoid, spacing: 5 })
+    const palette = colors.map((color) => new THREE.Color(color))
+    const centers = chosenCenters ?? scatter({ random, count: patches, sample: (r) => sampleBand(r, island, { to: -2.5 }), avoid, spacing: 5 })
 
     const flowers = []
     for (const center of centers) {

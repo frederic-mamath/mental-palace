@@ -16,6 +16,7 @@ import { createRandom } from './Decor/scatter.js'
 import { islands } from './islands.js'
 import WindField from './WindField.js'
 import City from './City/City.js'
+import HobbyIsland from './Hobby/HobbyIsland.js'
 import Airstrip from './Airstrip.js'
 import Airplane from './Airplane/Airplane.js'
 import Flight from './Airplane/Flight.js'
@@ -34,6 +35,7 @@ export default class World {
       this.island = new Island({ shape: islands.entrepreneur })
       this.water = new Water({ islands: Object.values(islands) })
       this.city = new City({ shape: islands.city, origin: islands.entrepreneur })
+      this.hobbyIsland = new HobbyIsland({ shape: islands.hobby, origin: islands.entrepreneur })
       this.airFranceHangar = new AirFranceHangar({ project: projects.airFrance, frame: this.city.frame, ...this.city.hangarSite })
 
       // North is -z: straight ahead from the spawn point
@@ -49,7 +51,7 @@ export default class World {
       this.flight = new Flight({ airplane: this.airplane, airstrip: this.airstrip, city: this.city, colliders: this.colliders })
 
       // City obstacles, for when the cloud flies over (added after the decor, like every late collider)
-      this.colliders.push(...this.city.colliders, this.airFranceHangar.collider)
+      this.colliders.push(...this.city.colliders, this.airFranceHangar.collider, ...this.hobbyIsland.colliders)
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
@@ -91,6 +93,7 @@ export default class World {
     this.boarding?.update()
     this.doubleTap?.update()
     this.airFranceHangar?.update()
+    this.hobbyIsland?.update()
     this.cloud?.update()
     this.windField?.update()
     this.interactions?.update()
