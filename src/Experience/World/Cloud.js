@@ -3,6 +3,7 @@ import Experience from '../Experience.js'
 import { createGradientMap, createOutlineMaterial } from './toon.js'
 import Afterimages from './Effects/Afterimages.js'
 import DustBurst from './Effects/DustBurst.js'
+import SpeedLines from './Effects/SpeedLines.js'
 
 // The main character: a puffy cel-shaded cloud built from overlapping spheres.
 // Each puff gets an inverted-hull twin, so ink lines show on the silhouette and in the creases between puffs.
@@ -31,8 +32,8 @@ export default class Cloud {
       bank: 0.06,
       boundsRadius: 27,
       collisionRadius: 1.4,
-      dashSpeed: 16,
-      dashDuration: 0.22,
+      dashSpeed: 24,
+      dashDuration: 0.28,
       dashCooldown: 0.5,
       dashStretch: 0.35,
     }
@@ -198,6 +199,7 @@ export default class Cloud {
 
     this.afterimages = new Afterimages({ meshes: this.puffs })
     this.dust = new DustBurst()
+    this.speedLines = new SpeedLines()
 
     this.inputs.on('actionStart', (action) => {
       if (action === 'dash') this.startDash()
@@ -217,10 +219,12 @@ export default class Cloud {
 
     this.dash.timer = this.params.dashDuration
     this.dash.cooldown = this.params.dashDuration + this.params.dashCooldown
-    this.dash.ghostTimer = 0
+    // First ghost once the cloud has moved a bit, so it doesn't overlap the body
+    this.dash.ghostTimer = 0.045
 
     this.dust.spawn(this.group.position, this.dash.direction)
-    this.experience.camera.kick(6)
+    this.speedLines.burst(this.params.dashDuration)
+    this.experience.camera.kick(3)
   }
 
   updateDash(delta) {
@@ -231,7 +235,7 @@ export default class Cloud {
       this.dash.ghostTimer -= delta
       if (this.dash.ghostTimer <= 0) {
         this.afterimages.spawn(this.body)
-        this.dash.ghostTimer = 0.035
+        this.dash.ghostTimer = 0.045
       }
     }
 
@@ -247,6 +251,7 @@ export default class Cloud {
 
     this.afterimages.update(delta)
     this.dust.update(delta)
+    this.speedLines.update(delta)
   }
 
   updateOutlineThickness() {

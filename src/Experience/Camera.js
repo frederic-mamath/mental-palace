@@ -10,8 +10,10 @@ export default class Camera {
     this.canvas = this.experience.canvas
 
     this.target = null
-    this.targetPreviousPosition = new THREE.Vector3()
+    // Smoothed point the camera actually tracks; it trails the target so fast moves read on screen
+    this.followPosition = new THREE.Vector3()
     this.followDelta = new THREE.Vector3()
+    this.followSpeed = 6
     this.fovOffset = 0
 
     this.setInstance()
@@ -39,15 +41,19 @@ export default class Camera {
   // Only follows on the horizontal plane so the character's bobbing doesn't shake the view.
   follow(object) {
     this.target = object
-    this.targetPreviousPosition.copy(object.position)
+    this.followPosition.copy(object.position)
   }
 
   updateFollow() {
-    this.followDelta.subVectors(this.target.position, this.targetPreviousPosition)
+    const easing = 1 - Math.exp(-this.followSpeed * this.experience.time.delta)
+
+    this.followDelta.copy(this.followPosition)
+    this.followPosition.lerp(this.target.position, easing)
+    this.followDelta.subVectors(this.followPosition, this.followDelta)
     this.followDelta.y = 0
+
     this.instance.position.add(this.followDelta)
     this.controls.target.add(this.followDelta)
-    this.targetPreviousPosition.copy(this.target.position)
   }
 
   // Short field-of-view widening that settles back, for impacts and bursts of speed

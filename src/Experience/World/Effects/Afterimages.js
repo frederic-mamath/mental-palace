@@ -4,7 +4,7 @@ import Experience from '../../Experience.js'
 // Fading translucent copies of a set of meshes, left behind along a path (dash trail).
 // Ghosts are pooled: spawning reuses the oldest one.
 export default class Afterimages {
-  constructor({ meshes, count = 10, lifetime = 0.35, color = '#9fe3ff', opacity = 0.55 }) {
+  constructor({ meshes, count = 10, lifetime = 0.4, color = '#3fb8ff', opacity = 0.8 }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
