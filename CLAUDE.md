@@ -33,4 +33,23 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 
 **After committing:** push to `origin main`, then report the short hash and message to the user.
 
-**Rollbacks:** prefer `git revert <hash>` (keeps history). Only use `git reset --hard` or force-push when the user explicitly asks, after showing what will be lost. Tag notable milestones (e.g. `git tag v0.1-cloud-character`) when the user asks or a release-worthy state is reached.
+**Rollbacks:** prefer `git revert <hash>` (keeps history). Only use `git reset --hard` or force-push when the user explicitly asks, after showing what will be lost.
+
+## Milestone tags
+
+Tags mark known-good states to jump back to (`git checkout <tag>`) or compare against (`git diff <tag>`).
+
+- **When:** before starting a multi-step feature (a safe point to roll back to) and when a multi-step feature is complete. Also when the user asks. No need to ask first.
+- **Name:** `v0.<n>-<kebab-slug>` describing the state reached, with `<n>` one above the latest tag (`git tag --sort=-creatordate | head -1`), e.g. `v0.2-entrepreneur-island`, `v0.3-city-island`.
+- **Annotated** with a one-line summary of what the state contains: `git tag -a v0.3-city-island -m "..."`, then `git push origin <tag>`.
+- Only tag a commit that builds and was manually tested by the user. Never move or delete a pushed tag; create a new one instead.
+
+## Multi-step features
+
+When a feature is too big for one commit (new systems, refactors plus features, several visible parts):
+
+1. Propose a plan first: a table of steps, each one a commit (`refactor` steps before the `feat` steps that need them), with what the user should test manually after it. Ask about design choices that change the build.
+2. Tag the current state (see above), then build one step at a time.
+3. A step that should change nothing visible (refactor) is verified with a before/after comparison (fingerprint of geometry, instance positions, colliders...), not just a screenshot.
+4. After each step: commit, push, give the user a short manual test checklist, and **stop** until they confirm or report issues.
+5. When the last step is confirmed, tag the finished feature.
