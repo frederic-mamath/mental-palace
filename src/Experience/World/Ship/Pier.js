@@ -16,8 +16,8 @@ export function shoreAlong(island, frame, across, inland, seaward) {
   return (land + sea) / 2
 }
 
-// Wooden pier on posts, flush with the plateau (deck top at y = 0), running along a frame from `landEnd`
-// (just inland of the cliff) out to `seaEnd`. The ship moors off its tip.
+// Wooden pier on posts, level with the plateau, running along a frame from `landEnd` (just inland of the
+// cliff, so it joins the land seamlessly) out to `seaEnd`. The ship moors off its tip.
 export default class Pier {
   constructor({ frame, across = 0, landEnd, seaEnd, width = 2.2 }) {
     this.experience = new Experience()
@@ -40,7 +40,10 @@ export default class Pier {
     this.group.rotation.y = frame.yaw + (this.direction < 0 ? Math.PI : 0)
     this.scene.add(this.group)
 
-    const deckGeometry = new THREE.BoxGeometry(length, 0.18, width).translate(length / 2, -0.09, 0)
+    // Deck top a few centimeters above the plateau: where the pier overlaps the land, a deck exactly at the
+    // grass's height z-fights with it (both surfaces at the same depth flicker through each other)
+    const deckTop = 0.05
+    const deckGeometry = new THREE.BoxGeometry(length, 0.18, width).translate(length / 2, deckTop - 0.09, 0)
     const deck = new THREE.Mesh(deckGeometry, new THREE.MeshToonMaterial({ map: this.createPlankTexture(length), gradientMap }))
     deck.receiveShadow = true
     deck.castShadow = true
@@ -58,7 +61,7 @@ export default class Pier {
         this.group.add(mesh)
       }
     }
-    const bollard = new THREE.CylinderGeometry(0.16, 0.2, 0.45, 10).translate(0, 0.22, 0)
+    const bollard = new THREE.CylinderGeometry(0.16, 0.2, 0.45, 10).translate(0, deckTop + 0.22, 0)
     for (const side of [-1, 1]) {
       const mesh = new THREE.Mesh(bollard, new THREE.MeshToonMaterial({ color: '#2a2833', gradientMap }))
       mesh.position.set(length - 0.4, 0, side * (width / 2 - 0.3))
