@@ -44,4 +44,5 @@ src/Experience/
     Effects/        reusable visual effects (Afterimages, DustBurst, SpeedLines, BoomRing, ZoneRing, HeartPop)
     Decor/          seeded scatter of grass, flowers, rocks and palm trees
     City/           Paris-inspired city island (street grid, Haussmann buildings, Eiffel Tower, airport)
+    Airplane/       AF airliner model and its scripted round trip between the two runways
 ```

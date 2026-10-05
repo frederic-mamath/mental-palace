@@ -188,6 +188,8 @@ export default class Cloud extends EventEmitter {
     const position = this.group.position
 
     for (const collider of this.colliders) {
+      // Moving colliders (the airplane once airborne) can switch themselves off
+      if (collider.disabled) continue
       this.pushDirection.set(position.x - collider.position.x, 0, position.z - collider.position.z)
       const distance = this.pushDirection.length()
       const minDistance = collider.radius + this.params.collisionRadius

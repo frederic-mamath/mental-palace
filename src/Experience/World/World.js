@@ -16,6 +16,8 @@ import { islands } from './islands.js'
 import WindField from './WindField.js'
 import City from './City/City.js'
 import Airstrip from './Airstrip.js'
+import Airplane from './Airplane/Airplane.js'
+import Flight from './Airplane/Flight.js'
 
 export default class World {
   constructor() {
@@ -39,6 +41,9 @@ export default class World {
       this.setDecor()
       // After the decor, so this new collider doesn't change where decor was placed
       this.colliders.push(this.airstrip.collider)
+
+      this.airplane = new Airplane()
+      this.flight = new Flight({ airplane: this.airplane, airstrip: this.airstrip, city: this.city, colliders: this.colliders })
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
@@ -75,6 +80,7 @@ export default class World {
     this.water?.update()
     this.palmTrees?.update()
     this.airstrip?.update()
+    this.flight?.update()
     this.doubleTap?.update()
     this.cloud?.update()
     this.windField?.update()
