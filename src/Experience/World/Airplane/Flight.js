@@ -9,7 +9,8 @@ const easings = {
   decelerate: (t) => 1 - (1 - t) ** 2,
 }
 
-// Toon-scale speeds (units per second) and flight profile
+// Toon-scale speeds (units per second) and flight profile. Lift-off, climb, cruise, approach and touchdown
+// all share the same pace, so the airplane never jumps in speed between phases
 const profile = {
   takeoffRoll: 11, // runway distance before lift-off
   climbDistance: 22,
@@ -18,9 +19,10 @@ const profile = {
   detour: 9, // sideways bulge of the flight path over the sea; outbound and return bulge on opposite sides
   rollSpeed: 8,
   climbSpeed: 8,
-  cruiseSpeed: 7,
-  approachSpeed: 7.5,
+  cruiseSpeed: 8,
+  approachSpeed: 8,
   turn: 2.4, // seconds to turn around on the runway after landing
+  airSpeedup: 2, // the trip's clock runs this much faster in the air (see clockRate)
 }
 
 // The airplane's trips between the airstrip ('airstrip') and the city runway ('city'). Both lie on the
@@ -139,11 +141,25 @@ export default class Flight extends EventEmitter {
     return { phase, altitude, heading }
   }
 
+  // How fast the trip's clock runs: normal on the ground, ramping up to airSpeedup over the second half of
+  // the take-off roll, sped up through the climb, cruise and approach, ramping back down just after touchdown.
+  // The path stays the same; only the pace changes, smoothly, so there's no jolt in speed.
+  clockRate() {
+    const { phase } = this
+    if (!phase) return 1
+    const progress = (this.elapsed - phase.start) / phase.duration
+    const extra = profile.airSpeedup - 1
+    if (phase.name === 'takeoff') return 1 + extra * smoothstep(THREE.MathUtils.clamp((progress - 0.5) / 0.5, 0, 1))
+    if (phase.name === 'rollout') return 1 + extra * (1 - smoothstep(THREE.MathUtils.clamp(progress / 0.4, 0, 1)))
+    if (phase.name === 'turn') return 1
+    return profile.airSpeedup
+  }
+
   update() {
     const delta = this.time.delta
 
     if (this.trip) {
-      this.elapsed += delta
+      this.elapsed += delta * this.clockRate()
       if (this.elapsed >= this.trip.duration) {
         this.parkedAt = this.trip.to
         this.trip = null
