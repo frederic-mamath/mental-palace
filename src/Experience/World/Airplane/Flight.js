@@ -30,7 +30,9 @@ const profile = {
 // an altitude, and a sideways offset for the curve over the sea.
 //
 // The airplane waits parked, facing the way back, until depart() sends it on its next trip:
-// take-off roll, climb, cruise, approach, rollout, turn around. Events: 'arrived' (stop name).
+// take-off roll, climb, cruise, approach, rollout, turn around.
+// Events: 'landed' (stop name) when the rollout ends and the turn begins, 'arrived' (stop name) once
+// turned around and parked.
 export default class Flight extends EventEmitter {
   constructor({ airplane, airstrip, city, colliders }) {
     super()
@@ -84,6 +86,7 @@ export default class Flight extends EventEmitter {
     if (this.trip) return
     this.trip = this.trips[this.parkedAt]
     this.elapsed = 0
+    this.landed = false
   }
 
   // One trip from parked at `from` to parked at `to`, facing back: durations follow from distances and speeds
@@ -160,6 +163,14 @@ export default class Flight extends EventEmitter {
 
     if (this.trip) {
       this.elapsed += delta * this.clockRate()
+
+      // Even if a long frame skips past the turn entirely, 'landed' still comes before 'arrived'
+      const turnStart = this.trip.phases.find((phase) => phase.name === 'turn').start
+      if (!this.landed && this.elapsed >= turnStart) {
+        this.landed = true
+        this.trigger('landed', this.trip.to)
+      }
+
       if (this.elapsed >= this.trip.duration) {
         this.parkedAt = this.trip.to
         this.trip = null

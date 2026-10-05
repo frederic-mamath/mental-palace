@@ -7,8 +7,8 @@ const stopIslands = { airstrip: islands.entrepreneur, city: islands.city }
 const prompts = { airstrip: 'Board AF flight to Paris', city: 'Fly back to the island' }
 
 // Landmark (see Interactions) for taking the airplane: offered when it's parked on the character's island.
-// Boarding hides the character in a smoke poof and the camera follows the flight; after landing and
-// turning around, the character steps out beside the airplane on the other island.
+// Boarding hides the character in a smoke poof and the camera follows the flight; once the airplane has
+// rolled to a stop on the other island, the character steps out beside it while it turns around.
 export default class Boarding {
   constructor({ flight, airplane, character }) {
     this.experience = new Experience()
@@ -22,7 +22,7 @@ export default class Boarding {
     this.character = character
 
     this.zone = { position: airplane.group.position, radius: 6.5 }
-    this.flight.on('arrived', (stop) => this.disembark(stop))
+    this.flight.on('landed', (stop) => this.disembark(stop))
 
     // Ground ring around the parked airplane showing where boarding is offered, in the livery's red
     // (reads on both grass and asphalt); hidden while it can't be boarded
@@ -61,12 +61,13 @@ export default class Boarding {
     this.flight.depart()
   }
 
-  // Step out beside the parked airplane, off the runway (terminal side in the city, away from the
-  // Double Tap phone on the airstrip), facing away from it
+  // Step out beside the stopped airplane, off the runway (terminal side in the city, away from the
+  // Double Tap phone on the airstrip), facing away from it, far enough to stay clear of the wingtips
+  // while it turns around
   disembark(stop) {
     const side = stop === 'city' ? 1 : -1
     const { frame } = this.flight
-    const position = frame.toWorld(this.flight.stops[stop].s, side * 4.5, this.character.group.position.y)
+    const position = frame.toWorld(this.flight.stops[stop].s, side * 5.5, this.character.group.position.y)
     const yaw = Math.atan2(frame.v.x * side, frame.v.y * side)
 
     this.character.teleport(position, { island: stopIslands[stop], yaw })
