@@ -139,6 +139,9 @@ export default class Interactions {
     }
 
     if (this.active) {
+      // A landmark's label can change while it stays active (a vehicle's destination after a trip)
+      const label = this.labelFor(this.active)
+      if (this.prompt.label.textContent !== label) this.prompt.show(label)
       this.active.getPromptAnchor(this.anchor).project(this.camera.instance)
       this.prompt.setPosition(((this.anchor.x + 1) / 2) * this.sizes.width, ((1 - this.anchor.y) / 2) * this.sizes.height)
     }

@@ -8,9 +8,11 @@ import ZoneRing from '../Effects/ZoneRing.js'
 // it has landed, the character steps out at the route's drop-off spot.
 //
 // route: { parkedAt (stop name), travelling, depart(), dropOff(stop) -> { position, yaw }, events 'landed' (stop) }
-// stops: { [stop name]: { island (IslandShape), prompt } }
+// stops: { [stop name]: { island (IslandShape), prompt, zone } }: by default the interaction zone surrounds the
+// vehicle; a stop can set its own zone ({ position, radius }), e.g. on land when the vehicle floats offshore
+// followVertical: whether the camera follows the vehicle's height changes during the trip
 export default class Boarding {
-  constructor({ route, vehicle, character, stops, ringColor, zoneRadius = 6.5, ringRadius = 6, promptHeight = 2.6 }) {
+  constructor({ route, vehicle, character, stops, ringColor, zoneRadius = 6.5, ringRadius = 6, promptHeight = 2.6, followVertical = true }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
     this.time = this.experience.time
@@ -22,14 +24,20 @@ export default class Boarding {
     this.character = character
     this.stops = stops
     this.promptHeight = promptHeight
+    this.ringRadius = ringRadius
+    this.followVertical = followVertical
 
-    this.zone = { position: vehicle.position, radius: zoneRadius }
+    this.vehicleZone = { position: vehicle.position, radius: zoneRadius }
     this.route.on('landed', (stop) => this.disembark(stop))
 
     // Ground ring around the parked vehicle showing where boarding is offered; hidden while it can't be boarded
     this.ringAnchor = new THREE.Group()
     this.scene.add(this.ringAnchor)
     this.ring = new ZoneRing({ parent: this.ringAnchor, radius: ringRadius, color: ringColor })
+  }
+
+  get zone() {
+    return this.stops[this.route.parkedAt].zone ?? this.vehicleZone
   }
 
   get available() {
@@ -45,7 +53,8 @@ export default class Boarding {
   }
 
   getPromptAnchor(target) {
-    return target.copy(this.vehicle.position).setY(this.vehicle.position.y + this.promptHeight)
+    const anchor = this.zone.position
+    return target.copy(anchor).setY(anchor.y + this.promptHeight)
   }
 
   setActive(active) {
@@ -58,7 +67,7 @@ export default class Boarding {
     this.ring.setActive(false)
     this.inputs.movementLocked = true
     this.character.setHidden(true)
-    this.camera.follow(this.vehicle, { vertical: true })
+    this.camera.follow(this.vehicle, { vertical: this.followVertical })
     this.route.depart()
   }
 
@@ -73,7 +82,7 @@ export default class Boarding {
   }
 
   update() {
-    const position = this.vehicle.position
+    const { position } = this.zone
     this.ringAnchor.position.set(position.x, 0, position.z)
     this.ringAnchor.visible = this.available
     this.ring.update(this.time.delta, this.time.elapsed)

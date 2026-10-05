@@ -20,7 +20,8 @@ export const easings = {
 //
 // Subclasses build this.trips with createTrip() and implement applyPose({ position, forward, altitude,
 // delta }); they may override clockRate().
-//   frame: the flight frame; stops: { [name]: { s, heading } }, heading measured from +u toward +v
+//   frame: the flight frame; stops: { [name]: { s, heading, across } }, heading measured from +u toward +v,
+//   across an optional sideways offset of the parked vehicle (trips' lateral functions should match it)
 //   baseHeight: height of the vehicle's center when altitude is 0
 export default class Route extends EventEmitter {
   constructor({ frame, stops, parkedAt, baseHeight }) {
@@ -79,7 +80,7 @@ export default class Route extends EventEmitter {
   positionAt(time, target) {
     if (!this.trip) {
       const stop = this.stops[this.parkedAt]
-      this.frame.toWorld(stop.s, 0, this.baseHeight, target)
+      this.frame.toWorld(stop.s, stop.across ?? 0, this.baseHeight, target)
       return { phase: null, altitude: 0, heading: stop.heading }
     }
 

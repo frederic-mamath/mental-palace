@@ -24,11 +24,13 @@ const pathWidth = 1.7
 // characters). Laid out as four zones around a central plaza with a signpost, linked by dirt paths, with its
 // own grass, flowers, rocks and palms.
 export default class HobbyIsland {
-  constructor({ shape, origin }) {
+  // keepClear(x, z, margin): extra places to keep decor off (the ship's jetty and its water lane)
+  constructor({ shape, origin, keepClear = () => false }) {
     this.experience = new Experience()
     this.scene = this.experience.scene
 
     this.shape = shape
+    this.keepClear = keepClear
     this.frame = createCityFrame(origin.center, shape.center)
     this.zones = structuredClone(zones)
     // The cove's sand reaches the inner shore of the bay, which faces the entrepreneur island
@@ -171,6 +173,7 @@ export default class HobbyIsland {
 
   // Is (x, z) on a zone patch or a path, grown by `margin`? Keeps decor off them.
   onLayout(x, z, margin) {
+    if (this.keepClear(x, z, margin)) return true
     const { along, across } = this.frame.toFrame(x, z)
     for (const zone of Object.values(this.zones)) {
       if (Math.hypot(along - zone.along, across - zone.across) < zone.radius * 1.1 + margin) return true
