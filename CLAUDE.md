@@ -28,6 +28,32 @@ Existing systems (all under `src/Experience/World/` unless noted):
 | Effects (`Effects/`) | self-contained pooled effects (ZoneRing, HeartPop, DustBurst, Afterimages, BoomRing, SpeedLines) with `spawn`/`update` |
 | Wind (`toon.js` `applyWind`, `WindField.js`) | `applyWind(material, ...)` on any instanced plant material |
 
+## Glossary
+
+Shared vocabulary between the user and Claude. Use these words with these meanings, in conversation and in code; add a term when a new concept appears.
+
+**World**
+- **Island**: a piece of land in the sea, defined by an `IslandShape`. **Entrepreneur island** (origin, wild; personal projects, sport, routines), **professional island** or **city** (Paris-inspired, north-west; career from 25 to 35), **hobby island** (north; shonen manga and games, storytelling, mini-games).
+- **Plateau**: an island's flat top (y = 0) where the character walks. **Shore**: the lower ring around it (sand **beach** on wild islands, stone **quay ledge** in the city). **Bay**: a dent in a coastline; the hobby island's bay is the **cove**.
+- **Zone (island)**: a themed area of an island (e.g. the hobby island's Training Ground, Arena, Story Meadow, Pirate Cove).
+- **Frame**: the along / across coordinates of the line between two islands (`cityFrame.js`); runways and the city grid follow it.
+- **Decor**: grass, flowers, rocks, palms (and city trees) placed by seeded scatter. **Seed**: the number fixing a decor layout. **Cleared zone**: where removed decor would have stood, still avoided by later decor so nothing else moves.
+
+**Character**
+- **Cloud**: the main character. **Dash**: Space burst with **afterimages**, **dust**, **speed lines**, **boom ring** and a **shockwave** in the grass. **Gust**: the stronger grass push while dashing. **Wake**: grass recovering behind the cloud. **Poof**: the smoke burst when the cloud hides or reappears.
+
+**Interaction**
+- **Landmark**: an object the character can interact with (Double Tap phone, Air France Industries hangar, a vehicle). **Interaction zone**: the circle where it becomes **active**. **Ring**: the ground circle showing that zone. **Prompt**: the floating "E · ..." bubble.
+- **Open**: interacting with a project landmark: the **focus** (camera glide to its **focus pose**), the dimmed **backdrop** and the **card** (project card: status band, summary, highlights, role, stack, lesson, links). **Tap / react**: pressing E while open. **Lesson**: the card's closing pull quote.
+- **Project**: an entry in `projects.js` shown on a card. **Story beat**: a hobby island card about how a story shaped the user.
+
+**Transport**
+- **Vehicle**: what carries the cloud between islands (AF airplane, pirate ship). **Route**: its trips between **stops** (`Flight` for the plane). **Board**: get on (E at the vehicle). **Trip**: one journey between two stops. **Drop-off**: where the cloud steps out when the vehicle has **landed** (stopped), before it turns around and is **parked**.
+- **Airstrip**: the bush runway on the entrepreneur island. **Pier**: the ship's dock.
+
+**Process**
+- **Step**: one commit of a multi-step feature, followed by the user's **manual test**. **Fingerprint**: a before/after record proving a refactor changed nothing. **Milestone tag**: `v0.<n>-<slug>` on a tested state.
+
 ## Git workflow: one commit per change
 
 The history must stay navigable so any version can be inspected, reverted or rolled back.
