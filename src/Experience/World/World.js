@@ -86,7 +86,7 @@ export default class World {
           cove: { island: islands.hobby, prompt: 'Sail back home', zone: this.seaRoute.zones.cove },
         },
       })
-      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.airFranceHangar, this.boarding, this.shipBoarding] })
+      this.interactions = new Interactions({ character: this.cloud, landmarks: [this.doubleTap, this.airFranceHangar, ...this.hobbyIsland.storyStones, this.boarding, this.shipBoarding] })
       this.experience.camera.follow(this.cloud.group, { snap: true })
     })
   }

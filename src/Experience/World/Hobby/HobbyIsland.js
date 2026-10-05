@@ -11,6 +11,9 @@ import PalmTrees from '../Decor/PalmTrees.js'
 import TrainingGround from './TrainingGround.js'
 import PirateCove from './PirateCove.js'
 import Arena from './Arena.js'
+import StoryMeadow from './StoryMeadow.js'
+import StoryStone from './StoryStone.js'
+import { stories } from '../../projects.js'
 
 // Zones, in the island's frame: `along` points away from the entrepreneur island (north), `across` east.
 // Each zone gets a ground patch now; their landmarks and story beats come later.
@@ -53,6 +56,23 @@ export default class HobbyIsland {
     this.trainingGround = new TrainingGround({ frame: this.frame, zone: this.zones.training, colliders: this.colliders })
     this.pirateCove = new PirateCove({ frame: this.frame, zone: this.zones.cove, colliders: this.colliders })
     this.arena = new Arena({ frame: this.frame, zone: this.zones.arena, colliders: this.colliders })
+    this.storyMeadow = new StoryMeadow({ frame: this.frame, zone: this.zones.meadow, colliders: this.colliders })
+    this.setStoryStones()
+  }
+
+  // One story beat per zone, beside its path and facing where visitors arrive from (offsets in the zone's
+  // own space: x north, z east; turn: extra rotation of the carved face, which faces east (+z) at 0)
+  setStoryStones() {
+    const placements = [
+      { story: stories.shonen, zone: this.zones.training, x: 2.6, z: 4.4, turn: 0 }, // just inside the torii
+      { story: stories.onlineGames, zone: this.zones.arena, x: 3.0, z: -5.5, turn: Math.PI }, // at the Arena's entrance
+      { story: stories.ff7, zone: this.zones.meadow, x: 0.5, z: 0, turn: -Math.PI / 2 }, // in the meadow, facing the plaza
+    ]
+    this.storyStones = placements.map(({ story, zone, x, z, turn }) => {
+      const stone = new StoryStone({ story, position: this.frame.toWorld(zone.along + x, zone.across + z), yaw: this.frame.yaw + turn })
+      this.colliders.push(stone.collider)
+      return stone
+    })
   }
 
   // Dirt paths from the plaza out to each zone, gently curved
@@ -219,5 +239,6 @@ export default class HobbyIsland {
     this.palmTrees.update()
     this.trainingGround.update()
     this.arena.update()
+    for (const stone of this.storyStones) stone.update()
   }
 }

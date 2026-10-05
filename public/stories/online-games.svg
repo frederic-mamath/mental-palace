@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#8b5cf6"/>
+  <!-- A faceted crystal -->
+  <path d="M64 14 L92 52 L64 114 L36 52 Z" fill="#e9ddff"/>
+  <path d="M64 14 L92 52 L64 60 Z" fill="#ffffff"/>
+  <path d="M36 52 L64 60 L64 114 Z" fill="#c4b0f7"/>
+</svg>

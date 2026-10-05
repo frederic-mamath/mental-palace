@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="28" fill="#3fbf8f"/>
+  <!-- A broad greatsword, point down -->
+  <path d="M52 20 H76 V86 L64 104 L52 86 Z" fill="#e8edf2"/>
+  <rect x="42" y="86" width="44" height="8" rx="3" fill="#2a2833" transform="translate(0 -8)"/>
+  <rect x="58" y="6" width="12" height="16" rx="3" fill="#7a4a2a"/>
+</svg>
