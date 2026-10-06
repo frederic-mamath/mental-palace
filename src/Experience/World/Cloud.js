@@ -41,7 +41,8 @@ export default class Cloud extends EventEmitter {
       color: '#ffffff',
       outlineColor: '#1a1626',
       outlineThickness: 0.05,
-      hoverHeight: 1.15, // body center above the ground, so the hooves touch it
+      size: 0.75, // overall scale of the model, relative to the world
+      hoverHeight: 1.15, // body center above the ground at size 1, so the hooves touch it
       floatAmplitude: 0.03, // breathing
       floatSpeed: 1.5,
       legSwing: 0.6, // leg swing (radians) at full trot
@@ -53,7 +54,7 @@ export default class Cloud extends EventEmitter {
       lean: 0.04,
       bank: 0.04,
       shoreMargin: 0.8, // how far from the waterline the cloud's center must stay
-      collisionRadius: 1.4,
+      collisionRadius: 1.1, // matches size 0.75
       dashSpeed: 24,
       dashDuration: 0.28,
       dashCooldown: 0.5,
@@ -64,7 +65,8 @@ export default class Cloud extends EventEmitter {
     this.groundHeight = 0
 
     this.group = new THREE.Group()
-    this.group.position.y = this.groundHeight + this.params.hoverHeight
+    this.group.position.y = this.groundHeight + this.params.hoverHeight * this.params.size
+    this.group.scale.setScalar(this.params.size)
     this.scene.add(this.group)
 
     this.setMaterials()
@@ -563,7 +565,7 @@ export default class Cloud extends EventEmitter {
     folder.addColor(this.params, 'color').onChange((value) => this.materials.body.color.set(value))
     folder.addColor(this.params, 'outlineColor').onChange((value) => this.materials.outline.color.set(value))
     folder.add(this.params, 'outlineThickness', 0, 0.2, 0.001).onChange(() => this.updateOutlineThickness())
-    folder.add(this.params, 'hoverHeight', 0.5, 5, 0.01)
+    folder.add(this.params, 'size', 0.4, 1.5, 0.01).onChange((value) => this.group.scale.setScalar(value))
     folder.add(this.params, 'floatAmplitude', 0, 1, 0.01)
     folder.add(this.params, 'floatSpeed', 0, 5, 0.01)
     folder.add(this.params, 'speed', 0.5, 15, 0.1)
@@ -596,7 +598,9 @@ export default class Cloud extends EventEmitter {
     const bounce = Math.abs(Math.sin(this.gait)) * 0.08 * effort
 
     // Breathing, a little sway at rest, leaning forward with speed and into turns
-    this.group.position.y = this.groundHeight + this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude + bounce
+    // Heights are in the model's own units, so they scale with it
+    const size = this.params.size
+    this.group.position.y = this.groundHeight + (this.params.hoverHeight + Math.sin(t) * this.params.floatAmplitude + bounce) * size
     this.group.rotation.y = this.yaw
     this.group.rotation.x = Math.sin(t * 0.4) * 0.015 + Math.min(this.speedRatio, 1.5) * this.params.lean
     this.group.rotation.z = Math.sin(t * 0.55) * 0.02 + bank

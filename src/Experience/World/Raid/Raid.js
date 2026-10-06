@@ -83,7 +83,8 @@ export default class Raid {
   // Moves the cloud (and the camera with it, at once) to a point on another floor
   moveCharacter(point, island, groundHeight, yaw) {
     const from = this.character.group.position.clone()
-    const to = new THREE.Vector3(point.x, groundHeight + this.character.params.hoverHeight, point.z)
+    const { hoverHeight, size } = this.character.params
+    const to = new THREE.Vector3(point.x, groundHeight + hoverHeight * size, point.z)
     this.character.teleport(to, { island, groundHeight, yaw })
     this.camera.jumpBy(to.clone().sub(from))
     this.experience.world.environment.groundLevel = groundHeight
