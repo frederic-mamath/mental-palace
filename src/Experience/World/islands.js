@@ -11,20 +11,30 @@ const float = (value) => value.toFixed(4)
 export class IslandShape {
   // harmonics: sum of sines around the circle, [frequency, amplitude, phase]; integer frequencies keep it seamless
   // bays: smooth dents in the coastline, { angle, depth (share of the radius), width (radians) }
-  constructor({ name, center = { x: 0, z: 0 }, radius, beachWidth, harmonics, bays = [] }) {
+  // capes: the opposite, smooth bulges, { angle, length (share of the radius), width (radians) }
+  constructor({ name, center = { x: 0, z: 0 }, radius, beachWidth, harmonics, bays = [], capes = [] }) {
     this.name = name
     this.center = center
     this.radius = radius // average radius of the plateau
     this.beachWidth = beachWidth // sand ring beyond the plateau, before the water
     this.harmonics = harmonics
     this.bays = bays
+    this.capes = capes
+    // Both as dents: a cape is a bay of negative depth
+    this.dents = [...bays, ...capes.map(({ angle, length, width }) => ({ angle, depth: -length, width }))]
+  }
+
+  // The same island before its capes were added (to lay out what was there before them)
+  withoutCapes() {
+    const { name, center, radius, beachWidth, harmonics, bays } = this
+    return new IslandShape({ name, center, radius, beachWidth, harmonics, bays })
   }
 
   // Radius of the plateau at `angle` (radians around the island's center, measured as Math.atan2(dz, dx))
   radiusAt(angle) {
     let factor = 1
     for (const [frequency, amplitude, phase] of this.harmonics) factor += amplitude * Math.sin(frequency * angle + phase)
-    for (const { angle: bayAngle, depth, width } of this.bays) {
+    for (const { angle: bayAngle, depth, width } of this.dents) {
       const offset = Math.atan2(Math.sin(angle - bayAngle), Math.cos(angle - bayAngle))
       factor *= 1 - depth * Math.exp(-(offset * offset) / (2 * width * width))
     }
@@ -58,10 +68,10 @@ export class IslandShape {
 
   get glsl() {
     const terms = this.harmonics.map(([f, a, p]) => ` + ${float(a)} * sin(${float(f)} * angle + ${float(p)})`).join('')
-    const bays = this.bays
+    const bays = this.dents
       .map(({ angle, depth, width }) => {
         const offset = `atan(sin(angle - ${float(angle)}), cos(angle - ${float(angle)}))`
-        return ` * (1.0 - ${float(depth)} * exp(-pow(${offset}, 2.0) / ${float(2 * width * width)}))`
+        return ` * (1.0 - (${float(depth)}) * exp(-pow(${offset}, 2.0) / ${float(2 * width * width)}))`
       })
       .join('')
     return `float ${this.glslFunction}(float angle) { return ${float(this.radius)} * (1.0${terms})${bays}; }`
@@ -81,6 +91,7 @@ export const islands = {
   }),
   // Paris-inspired city, 110 units north-west: in view behind the Double Tap phone from the spawn point.
   // Its street grid and airport runway are aligned with the line between the two islands (the flight path).
+  // A cape at the far end from the airport holds the Fastory stadium.
   // Hobbies (shonen manga, online games, FF7), 100 units north. Its cove, a bay facing the entrepreneur
   // island, is where the ship docks.
   hobby: new IslandShape({
@@ -105,6 +116,8 @@ export const islands = {
       [2, 0.06, 1.1],
       [3, 0.04, 0.2],
     ],
+    // Straight on along the flight path (away from the entrepreneur island), slightly toward the +across side
+    capes: [{ angle: Math.atan2(-66, -88) + 0.05, length: 0.4, width: 0.28 }],
   }),
 }
 

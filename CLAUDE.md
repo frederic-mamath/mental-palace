@@ -20,7 +20,7 @@ Existing systems (all under `src/Experience/World/` unless noted):
 
 | System | Plug in by |
 | --- | --- |
-| Islands (`islands.js`) | adding an `IslandShape` (center, radius, harmonics, bays): land, water foam, movement limits and decor sampling follow |
+| Islands (`islands.js`) | adding an `IslandShape` (center, radius, harmonics, bays, capes): land, water foam, movement limits and decor sampling follow |
 | Landmarks (`Interactions.js`) | implementing the interface documented in `Projects/DoubleTap.js` (zone, prompt anchor, focus pose, active/open/react), or `interact()` for a custom action; content in `projects.js`; camera framing via `Projects/focusPose.js`; the zone's `ZoneRing` takes an interaction kind (`travel` / `experience`), never a color |
 | Transport (`Transport/Boarding.js`, `Transport/Route.js`) | a route extending `Route` (trips of phases along a flight frame, turnaround, `'landed'`/`'arrived'`) with its own phases, `applyPose` and `dropOff(stop)` (see `Airplane/Flight.js`), plus a vehicle object and stops config for `Boarding` |
 | Colliders (`Cloud.resolveCollisions`) | pushing circles `{ position, radius }` or rectangles `{ position, axis, halfLength, halfWidth }` (optional `disabled`) into `world.colliders`; walkable rectangles over the water into `world.walkways` |
@@ -34,7 +34,7 @@ Shared vocabulary between the user and Claude. Use these words with these meanin
 
 **World**
 - **Island**: a piece of land in the sea, defined by an `IslandShape`. **Entrepreneur island** (origin, wild; personal projects, sport, routines), **professional island** or **city** (Paris-inspired, north-west; career from 25 to 35), **hobby island** (north; shonen manga and games, storytelling, mini-games).
-- **Plateau**: an island's flat top (y = 0) where the character walks. **Shore**: the lower ring around it (sand **beach** on wild islands, stone **quay ledge** in the city). **Bay**: a dent in a coastline; the hobby island's bay is the **cove**.
+- **Plateau**: an island's flat top (y = 0) where the character walks. **Shore**: the lower ring around it (sand **beach** on wild islands, stone **quay ledge** in the city). **Bay**: a dent in a coastline; the hobby island's bay is the **cove**. **Cape**: the opposite, a bulge of a coastline (the city's holds the Fastory stadium).
 - **Zone (island)**: a themed area of an island (e.g. the hobby island's Training Ground, Arena, Story Meadow, Pirate Cove).
 - **Frame**: the along / across coordinates of the line between two islands (`cityFrame.js`); runways and the city grid follow it.
 - **Decor**: grass, flowers, rocks, palms (and city trees) placed by seeded scatter. **Seed**: the number fixing a decor layout. **Cleared zone**: where removed decor would have stood, still avoided by later decor so nothing else moves.

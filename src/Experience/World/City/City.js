@@ -10,7 +10,8 @@ import EiffelTower from './EiffelTower.js'
 
 // Paris-inspired city island: asphalt plateau with stone quays, Haussmann blocks on a street grid
 // aligned with the flight path, a tree-lined boulevard from the airport to a round place with a
-// column, and a lawn with the Eiffel Tower. Layout values are in city coordinates (see cityFrame.js).
+// column, a lawn with the Eiffel Tower, and a cape at the far end for the Fastory stadium. Layout values
+// are in city coordinates (see cityFrame.js).
 const layout = {
   blockSpacing: 11.5,
   blockSize: 7.6, // sidewalk slab; leaves 3.9-wide streets between blocks
@@ -51,6 +52,15 @@ export default class City {
       minAcross: this.hangarSite.across - 4.5,
       maxAcross: this.hangarSite.across + 4.5,
     }
+    // Site of the Fastory stadium (built by World as a project landmark) on the cape at the far end of the
+    // city, its long side across; kept free of buildings and quay trees
+    this.stadiumSite = { along: 34, across: 1 }
+    this.stadiumZone = {
+      minAlong: this.stadiumSite.along - 8,
+      maxAlong: this.stadiumSite.along + 9,
+      minAcross: this.stadiumSite.across - 11,
+      maxAcross: this.stadiumSite.across + 11,
+    }
     this.airport = new Airport({ frame: this.frame, runway: this.runway })
     this.colliders.push(...this.airport.colliders)
 
@@ -61,18 +71,20 @@ export default class City {
     this.setPark()
   }
 
-  // Grid slots on the island, clear of the airport, place and park. A slot where the whole block fits
+  // Grid slots on the island (its outline before the stadium's cape, so the cape only adds open ground),
+  // clear of the airport, place, park and stadium. A slot where the whole block fits
   // becomes a full block (sidewalk + 2 x 2 buildings); otherwise each building that fits on its own
   // gets its own lot, so the city edges and the airport surroundings fill in irregularly.
   layoutBlocks() {
     const { blockSpacing, blockSize, boulevardHalfWidth, place, park } = layout
     const unit = (blockSize - 1) / 2
     const corner = new THREE.Vector3()
+    const outline = this.shape.withoutCapes()
 
     const fits = (along, across, half) => {
       const onIsland = [[-1, -1], [-1, 1], [1, -1], [1, 1]].every(([cu, cv]) => {
         this.frame.toWorld(along + cu * (half + 1), across + cv * (half + 1), 0, corner)
-        return this.shape.edgeDistance(corner.x, corner.z) < -1
+        return outline.edgeDistance(corner.x, corner.z) < -1
       })
       const overlaps = (zone) =>
         along + half > zone.minAlong && along - half < zone.maxAlong && across + half > zone.minAcross && across - half < zone.maxAcross
@@ -80,7 +92,7 @@ export default class City {
       const dx = Math.max(Math.abs(along - place.along) - half, 0)
       const dy = Math.max(Math.abs(across - place.across) - half, 0)
       const nearPlace = Math.hypot(dx, dy) < place.radius + 0.6
-      return onIsland && !overlaps(this.airportZone) && !overlaps(this.hangarZone) && !overlaps(park) && !nearPlace
+      return onIsland && !overlaps(this.airportZone) && !overlaps(this.hangarZone) && !overlaps(this.stadiumZone) && !overlaps(park) && !nearPlace
     }
 
     const lots = []
@@ -169,7 +181,8 @@ export default class City {
       const across = dx * this.frame.v.x + dz * this.frame.v.y
       const nearBuilding = this.blocks.some((lot) => Math.abs(along - lot.along) < lot.size / 2 + 1 && Math.abs(across - lot.across) < lot.size / 2 + 1)
       const clear = !inZone(along, across, this.airportZone, 1) && !inZone(along, across, this.hangarZone, 1.5) && !inZone(along, across, layout.park, 1)
-      if (clear && !nearBuilding) spots.push([along, across])
+      // Trees on the stadium's site are still drawn from the seed, then left out, so the others keep their looks
+      if (clear && !nearBuilding) spots.push([along, across, inZone(along, across, this.stadiumZone, 1)])
     }
 
     this.trees = this.createTrees(spots)
@@ -192,19 +205,25 @@ export default class City {
     const quaternion = new THREE.Quaternion()
     const scale = new THREE.Vector3()
 
-    spots.forEach(([along, across], i) => {
+    let count = 0
+    for (const [along, across, cleared = false] of spots) {
       const size = range(this.random, 0.85, 1.15)
+      const yaw = this.random() * Math.PI * 2
+      const green = greens[Math.floor(this.random() * greens.length)]
+      if (cleared) continue
+      const i = count++
       this.frame.toWorld(along, across, 0, position)
       this.colliders.push({ position: position.clone(), radius: 0.5 })
       trunks.setMatrixAt(i, matrix.compose(position, quaternion, scale.set(size, size, size)))
 
       position.y = 2.3 * size
-      quaternion.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, this.random() * Math.PI * 2)
+      quaternion.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, yaw)
       crowns.setMatrixAt(i, matrix.compose(position, quaternion, scale.set(1.15 * size, size, 1.15 * size)))
-      crowns.setColorAt(i, greens[Math.floor(this.random() * greens.length)])
+      crowns.setColorAt(i, green)
       crownOutlines.setMatrixAt(i, matrix.compose(position, quaternion, scale.set(1.15 * size + 0.07, size + 0.07, 1.15 * size + 0.07)))
       quaternion.identity()
-    })
+    }
+    for (const mesh of [crowns, trunks, crownOutlines]) mesh.count = count
 
     crowns.castShadow = true
     trunks.castShadow = true
