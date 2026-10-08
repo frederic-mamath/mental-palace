@@ -39,6 +39,24 @@ const projects = {
       "Early in my career, I thought the tool and the tech were what mattered most. PROGNOS taught me that tech has to be adapted to its industry, then distributed through pitching and training. Those are the pillars of a successful project: if one fails, the project fails. It's the path I've followed in every adventure since.",
     accent: '#d6202f',
   },
+  fastory: {
+    title: 'Fastory',
+    tagline: 'Turning ads into games.',
+    status: '2018 – 2020',
+    icon: 'projects/fastory/icon.svg',
+    summary:
+      'Fastory was a Paris startup building mobile-first ads: vertical, story-like experiences that brands shared on social networks. I joined to bring gamification into them, so the targeted audience would play with an ad instead of just looking at it.',
+    highlights: [
+      'Built the engine behind rewarding games, starting with sweepstakes',
+      'Then leaderboards, which became added value the business could sell',
+      'Helped start the CI/CD pipeline and the end-to-end tests',
+    ],
+    role: 'Fullstack Software Engineer',
+    stack: ['React', 'Node.js', 'hapi.js', 'PostgreSQL', 'Heroku'],
+    lesson:
+      'I used to be very addicted to video games. To break free, I had to learn the signals that kept bringing me back, and I found out what engaged me without my knowing it. At Fastory, I turned that around: my challenge was to make something fun out of a boring ad you would only look at.',
+    accent: '#1d2b64',
+  },
 }
 
 // Story beats of the hobby island: how these stories shaped the user, condensed from their own words.

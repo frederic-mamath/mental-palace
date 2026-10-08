@@ -6,6 +6,7 @@ import Water from './Water.js'
 import Cloud from './Cloud.js'
 import DoubleTap from './Projects/DoubleTap.js'
 import AirFranceHangar from './Projects/AirFranceHangar.js'
+import FastoryStadium from './Projects/FastoryStadium.js'
 import Interactions from './Interactions.js'
 import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
@@ -45,6 +46,7 @@ export default class World {
       this.setSeaRoute()
       this.hobbyIsland = new HobbyIsland({ shape: islands.hobby, origin: islands.entrepreneur, keepClear: (x, z, margin) => this.jetty.contains(x, z, margin) })
       this.airFranceHangar = new AirFranceHangar({ project: projects.airFrance, frame: this.city.frame, ...this.city.hangarSite })
+      this.fastoryStadium = new FastoryStadium({ project: projects.fastory, frame: this.city.frame, ...this.city.stadiumSite })
 
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
@@ -62,7 +64,7 @@ export default class World {
       this.voyage = new Voyage({ ship: this.ship, ...this.seaRoute })
 
       // City obstacles, for when the cloud flies over (added after the decor, like every late collider)
-      this.colliders.push(...this.city.colliders, this.airFranceHangar.collider, ...this.hobbyIsland.colliders)
+      this.colliders.push(...this.city.colliders, this.airFranceHangar.collider, ...this.hobbyIsland.colliders, ...this.fastoryStadium.colliders)
 
       this.cloud = new Cloud()
       this.windField = new WindField(this.cloud)
@@ -90,7 +92,7 @@ export default class World {
       this.raid = new Raid({ entrance: this.hobbyIsland.arena.raid.center, homeIsland: islands.hobby, character: this.cloud })
       this.interactions = new Interactions({
         character: this.cloud,
-        landmarks: [this.doubleTap, this.airFranceHangar, ...this.hobbyIsland.storyStones, this.raid, this.boarding, this.shipBoarding],
+        landmarks: [this.doubleTap, this.airFranceHangar, this.fastoryStadium, ...this.hobbyIsland.storyStones, this.raid, this.boarding, this.shipBoarding],
       })
       this.experience.camera.follow(this.cloud.group, { snap: true })
     })
@@ -163,6 +165,7 @@ export default class World {
     this.raid?.update()
     this.doubleTap?.update()
     this.airFranceHangar?.update()
+    this.fastoryStadium?.update()
     this.hobbyIsland?.update()
     this.cloud?.update()
     this.windField?.update()
