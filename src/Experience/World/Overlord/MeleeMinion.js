@@ -177,13 +177,13 @@ export default class MeleeMinion {
   setHammer() {
     this.hammer = new THREE.Group()
     this.hammer.name = 'hammer'
-    this.hammer.position.set(-1.02, 0.66, 0.26) // the fist
+    this.hammer.position.set(-1.02, 0.72, 0.26) // the fist; the head's bottom stays above the feet (y = 0)
     this.upper.add(this.hammer)
 
-    this.add(this.facet(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 6)), this.materials.steelDark, this.hammer, { position: [-0.12, -0.12, 0], rotation: [0, 0, -0.35], outline: 1.25 })
-    this.add(this.facet(new THREE.CylinderGeometry(0.12, 0.14, 0.12, 6)), this.materials.crystal, this.hammer, { position: [-0.22, -0.3, 0], outline: 1.15 })
-    this.add(this.chamferBox(0.66, 0.5, 0.6, 0.08), this.materials.steel, this.hammer, { position: [-0.3, -0.6, 0], outline: 1.05 })
-    this.add(this.facet(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 10).rotateZ(Math.PI / 2)), this.materials.wood, this.hammer, { position: [-0.645, -0.6, 0], outline: 1.2 })
+    this.add(this.facet(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 6)), this.materials.steelDark, this.hammer, { position: [-0.1, -0.06, 0], rotation: [0, 0, -0.35], outline: 1.25 })
+    this.add(this.facet(new THREE.CylinderGeometry(0.12, 0.14, 0.12, 6)), this.materials.crystal, this.hammer, { position: [-0.2, -0.17, 0], outline: 1.15 })
+    this.add(this.chamferBox(0.66, 0.5, 0.6, 0.08), this.materials.steel, this.hammer, { position: [-0.3, -0.47, 0], outline: 1.05 })
+    this.add(this.facet(new THREE.CylinderGeometry(0.07, 0.07, 0.04, 10).rotateZ(Math.PI / 2)), this.materials.wood, this.hammer, { position: [-0.645, -0.47, 0], outline: 1.2 })
   }
 
   // Tall shield on the left: a steel top plate with cut corners and a square window, over a wooden board
