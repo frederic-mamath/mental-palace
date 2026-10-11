@@ -4,8 +4,9 @@
 // not where anything lands on screen, so the only pixels that differ are depth ties: two surfaces at the
 // same depth, which flicker as the camera moves. Thin lines along outlines are precision noise at grazing
 // angles; only patches count (flickering pixels with mostly flickering neighbors), and a cell with
-// several patch pixels is a real overlap. Views: every landmark (close and from higher up, from four sides) and
-// every island from above, so new landmarks are covered without editing this file.
+// several patch pixels is a real overlap. Views: every landmark (close and from higher up, from four sides),
+// the zones that aren't landmarks (listed below) and every island from above; new landmarks are covered
+// without editing this file.
 //
 // Usage: npm run check:flicker   (CHROME_PATH=... to use another Chrome; diff images are written to
 // the folder printed at the end, flicker in magenta)
@@ -59,6 +60,17 @@ try {
         }
       }
     })
+    // Zones that aren't landmarks: their center, from the same sides
+    for (const [name, zone] of [['Overlord', world.overlord]]) {
+      if (!zone) continue
+      const { x, z } = zone.group.position
+      for (let side = 0; side < 4; side++) {
+        const angle = (side / 4) * Math.PI * 2 + 0.4
+        for (const [distance, height] of [[7, 4], [16, 11]]) {
+          views.push({ name: `${name} ${side}-${distance}`, position: [x + Math.cos(angle) * distance, height, z + Math.sin(angle) * distance], target: [x, 0.5, z] })
+        }
+      }
+    }
     for (const shape of [world.island.shape, world.city.shape, world.hobbyIsland.shape]) {
       const { x, z } = shape.center
       views.push({ name: `${shape.name} island`, position: [x + shape.radius * 0.9, shape.radius * 1.3, z + shape.radius * 0.9], target: [x, 0, z] })
