@@ -7,11 +7,13 @@ const colors = { stone: '#b4b0a6', blue: '#6f88b8', red: '#b8746f', plinth: '#8d
 // Tiles and props standing on the ground start this far below it (see "Known pitfalls" in CLAUDE.md)
 const sink = 0.04
 const hex = { size: 0.85, gap: 0.08, rings: 2, top: 0.1 }
+// Raised tiles where units are shown, in axial coordinates [q, r] (the middle tile is [0, 0])
+const plinthTiles = [[0, 0]]
 
 // The entrepreneur island's zone for Overlord, the user's slow, tactics-based mobile game (in the making):
 // a hexagonal game board in the grass, the player's rows (blue) facing the spawn point and the enemy's
-// (red) at the back, a raised tile in the middle where the game's units are shown, and a wooden sign.
-// Units are added with `showUnit`. Local axes: +z toward the spawn point (the board's front), y up.
+// (red) at the back, raised tiles (plinths) where the game's units are shown, and a wooden sign.
+// Units are added with `showUnit(unit, plinth)`. Local axes: +z toward the spawn point (the board's front), y up.
 export default class OverlordZone {
   constructor({ project, center }) {
     this.experience = new Experience()
@@ -53,16 +55,16 @@ export default class OverlordZone {
     return mesh
   }
 
-  // Hex tiles in rings around the middle one (axial coordinates), colored by side
+  // Hex tiles in rings around the middle one (axial coordinates), colored by side; plinths replace tiles
   setBoard() {
     const { size, gap, rings, top } = hex
     const tile = new THREE.CylinderGeometry(size - gap, size - gap, top + sink, 6).translate(0, (top - sink) / 2, 0)
     const materials = { stone: this.toon(colors.stone), blue: this.toon(colors.blue), red: this.toon(colors.red) }
+    const isPlinth = (q, r) => plinthTiles.some(([pq, pr]) => pq === q && pr === r)
     for (let q = -rings; q <= rings; q++) {
       for (let r = -rings; r <= rings; r++) {
-        if (Math.abs(q + r) > rings || (q === 0 && r === 0)) continue
-        const x = Math.sqrt(3) * size * (q + r / 2)
-        const z = 1.5 * size * r
+        if (Math.abs(q + r) > rings || isPlinth(q, r)) continue
+        const { x, z } = this.tilePosition(q, r)
         const side = z > 0.5 ? 'blue' : z < -0.5 ? 'red' : 'stone'
         const mesh = new THREE.Mesh(tile, materials[side])
         mesh.position.set(x, 0, z)
@@ -70,15 +72,24 @@ export default class OverlordZone {
       }
     }
 
-    // The middle tile, raised: a plinth for the units on show
+    // Raised tiles: plinths for the units on show
     this.plinthTop = 0.45
     // Unshared vertices: flat faces, so the sides don't get smooth-normal shadow stripes
     const plinthGeometry = new THREE.CylinderGeometry(size - gap, size + 0.05, this.plinthTop + sink, 6).translate(0, (this.plinthTop - sink) / 2, 0).toNonIndexed()
     plinthGeometry.computeVertexNormals()
-    const plinth = new THREE.Mesh(plinthGeometry, this.toon(colors.plinth))
-    this.outlined(plinth, [1.04, 1.06, 1.04])
-    // Its sides face away from the sun: received shadows only add a ragged penumbra there
-    plinth.receiveShadow = false
+    const plinthMaterial = this.toon(colors.plinth)
+    this.plinths = plinthTiles.map(([q, r]) => {
+      const plinth = new THREE.Mesh(plinthGeometry, plinthMaterial)
+      plinth.position.copy(this.tilePosition(q, r))
+      this.outlined(plinth, [1.04, 1.06, 1.04])
+      // Its sides face away from the sun: received shadows only add a ragged penumbra there
+      plinth.receiveShadow = false
+      return plinth.position.clone().setY(this.plinthTop - sink)
+    })
+  }
+
+  tilePosition(q, r) {
+    return new THREE.Vector3(Math.sqrt(3) * hex.size * (q + r / 2), 0, 1.5 * hex.size * r)
   }
 
   // A wooden sign at the board's front right corner, facing the spawn point
@@ -128,9 +139,9 @@ export default class OverlordZone {
   }
 
   // Puts a unit (an object with a `group`, and optionally `update(elapsed)` and `colliders` in its local
-  // space) on the plinth, facing the front
-  showUnit(unit) {
-    unit.group.position.set(0, this.plinthTop - sink, 0)
+  // space) on a plinth (an index in plinthTiles), facing the front
+  showUnit(unit, plinth = 0) {
+    unit.group.position.copy(this.plinths[plinth])
     this.group.add(unit.group)
     this.group.updateMatrixWorld(true)
     for (const { position, radius } of unit.colliders ?? []) {
