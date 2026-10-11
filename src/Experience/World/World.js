@@ -9,6 +9,7 @@ import AirFranceHangar from './Projects/AirFranceHangar.js'
 import FastoryStadium from './Projects/FastoryStadium.js'
 import OverlordZone from './Overlord/OverlordZone.js'
 import MeleeMinion from './Overlord/MeleeMinion.js'
+import RangedMinion from './Overlord/RangedMinion.js'
 import Interactions from './Interactions.js'
 import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
@@ -55,7 +56,8 @@ export default class World {
       this.colliders.push(this.doubleTap.collider)
       // South-east of the island: the zone of Overlord, the user's game in the making
       this.overlord = new OverlordZone({ project: projects.overlord, center: new THREE.Vector3(10, 0, 10) })
-      this.overlord.showUnit(new MeleeMinion())
+      this.overlord.showUnit(new MeleeMinion(), 0)
+      this.overlord.showUnit(new RangedMinion(), 1)
 
       this.airstrip = new Airstrip({ island: islands.entrepreneur, destination: islands.city })
       this.setDecor()

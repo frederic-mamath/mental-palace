@@ -8,7 +8,10 @@ const colors = { stone: '#b4b0a6', blue: '#6f88b8', red: '#b8746f', plinth: '#8d
 const sink = 0.04
 const hex = { size: 0.85, gap: 0.08, rings: 2, top: 0.1 }
 // Raised tiles where units are shown, in axial coordinates [q, r] (the middle tile is [0, 0])
-const plinthTiles = [[0, 0]]
+const plinthTiles = [
+  [-1, 0],
+  [1, 0],
+]
 
 // The entrepreneur island's zone for Overlord, the user's slow, tactics-based mobile game (in the making):
 // a hexagonal game board in the grass, the player's rows (blue) facing the spawn point and the enemy's
