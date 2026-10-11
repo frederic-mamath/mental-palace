@@ -284,7 +284,8 @@ export default class City {
     )
     lawn.receiveShadow = true
     const path = new THREE.Mesh(
-      new THREE.BoxGeometry(1.2, 0.18, lengthAcross).translate(0, 0.09, 0),
+      // A little shorter than the lawn: ends flush with its sides would z-fight
+      new THREE.BoxGeometry(1.2, 0.18, lengthAcross - 0.1).translate(0, 0.09, 0),
       new THREE.MeshToonMaterial({ color: '#e6d9b8', gradientMap: this.gradientMap })
     )
     path.receiveShadow = true
