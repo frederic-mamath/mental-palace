@@ -7,6 +7,7 @@ import Cloud from './Cloud.js'
 import DoubleTap from './Projects/DoubleTap.js'
 import AirFranceHangar from './Projects/AirFranceHangar.js'
 import FastoryStadium from './Projects/FastoryStadium.js'
+import OverlordZone from './Overlord/OverlordZone.js'
 import Interactions from './Interactions.js'
 import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
@@ -51,11 +52,13 @@ export default class World {
       // North is -z: straight ahead from the spawn point
       this.doubleTap = new DoubleTap({ project: projects.doubleTap, position: new THREE.Vector3(0, 0, -12) })
       this.colliders.push(this.doubleTap.collider)
+      // South-east of the island: the zone of Overlord, the user's game in the making
+      this.overlord = new OverlordZone({ project: projects.overlord, center: new THREE.Vector3(10, 0, 10) })
 
       this.airstrip = new Airstrip({ island: islands.entrepreneur, destination: islands.city })
       this.setDecor()
-      // After the decor, so this new collider doesn't change where decor was placed
-      this.colliders.push(this.airstrip.collider)
+      // After the decor, so these new colliders don't change where decor was placed
+      this.colliders.push(this.airstrip.collider, ...this.overlord.colliders)
 
       this.airplane = new Airplane()
       this.flight = new Flight({ airplane: this.airplane, airstrip: this.airstrip, city: this.city, colliders: this.colliders })
@@ -142,8 +145,9 @@ export default class World {
       ...(keepSpawnClear ? [spawn] : []),
       ...[...this.colliders, ...cleared].map(({ position, radius }) => ({ position, radius: radius + margin })),
     ]
-    // Palm crowns and rocks need more room than grass around the strip (and the pier's water lane)
-    const offStrip = (margin) => (x, z) => this.airstrip.contains(x, z, margin) || this.pier.contains(x, z, margin)
+    // Palm crowns and rocks need more room than grass around the strip (and the pier's water lane, and the
+    // Overlord board)
+    const offStrip = (margin) => (x, z) => this.airstrip.contains(x, z, margin) || this.pier.contains(x, z, margin) || this.overlord.contains(x, z, margin)
 
     const island = islands.entrepreneur
     const colliders = this.colliders
@@ -166,6 +170,7 @@ export default class World {
     this.doubleTap?.update()
     this.airFranceHangar?.update()
     this.fastoryStadium?.update()
+    this.overlord?.update()
     this.hobbyIsland?.update()
     this.cloud?.update()
     this.windField?.update()

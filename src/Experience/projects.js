@@ -68,6 +68,12 @@ const projects = {
     ],
     wheel: ['WIN', '100', '200', 'x2', '500', 'WIN', '50', 'x3'],
   },
+  // The user's mobile game (Unity, iOS and Android), at the very beginning: its zone on the entrepreneur
+  // island shows the units being designed. No card yet.
+  overlord: {
+    title: 'Overlord',
+    tagline: 'A slow, tactical mobile game · in the making',
+  },
 }
 
 // Story beats of the hobby island: how these stories shaped the user, condensed from their own words.
