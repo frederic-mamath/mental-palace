@@ -2,6 +2,10 @@ import * as THREE from 'three'
 import Experience from '../../Experience.js'
 import { createGradientMap, addOutlined } from '../toon.js'
 
+// Pieces standing on the ground start this far below it: a base (or its outline hull's bottom, drawn from
+// the inside) starting exactly at y = 0 z-fights with the ground
+const sink = 0.04
+
 // Glowing rune circle (concentric circles, glyphs, an eight-pointed star) on a transparent background;
 // shared by the Arena's raid platform and the raid instance
 export function createRuneTexture(color = '#7ee8ff') {
@@ -127,7 +131,7 @@ export default class Arena {
       const angle = Math.PI / 2 + Math.PI / 4 + (i / (count - 1)) * (Math.PI * 2 - Math.PI / 2)
       const x = center.x + Math.cos(angle) * (radius + 0.6)
       const z = center.z - Math.sin(angle) * (radius + 0.6)
-      addOutlined(this.group, obelisk, stone, { position: [x, 0, z], outline: [1.15, 1.02, 1.15] })
+      addOutlined(this.group, obelisk, stone, { position: [x, -sink, z], outline: [1.15, 1.02, 1.15] })
       // A glowing rune strip on the side facing the platform
       const rune = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 1.4), this.glow('#7ee8ff'))
       rune.position.set(x - Math.cos(angle) * 0.3, 1.3, z + Math.sin(angle) * 0.3)
@@ -157,7 +161,7 @@ export default class Arena {
     // The crystal at the end of the lane: a pedestal ring and a big floating gem
     const pedestal = this.toon('#6f6a7c')
     const end = new THREE.Vector3(laneX, 0, zEnd + 1.0)
-    addOutlined(this.group, new THREE.CylinderGeometry(1.0, 1.2, 0.4, 8).translate(0, 0.2, 0), pedestal, { position: end.toArray(), outline: [1.05, 1.1, 1.05] })
+    addOutlined(this.group, new THREE.CylinderGeometry(1.0, 1.2, 0.4, 8).translate(0, 0.2, 0), pedestal, { position: [end.x, -sink, end.z], outline: [1.05, 1.1, 1.05] })
     addOutlined(this.group, new THREE.TorusGeometry(0.8, 0.12, 6, 16).rotateX(Math.PI / 2), pedestal, { position: [end.x, 0.5, end.z], outline: 1.1 })
     this.nexus = new THREE.Mesh(new THREE.OctahedronGeometry(0.7, 0).scale(1, 1.7, 1), this.glow('#7e9cff'))
     this.nexus.position.set(end.x, 1.9, end.z)
@@ -169,8 +173,8 @@ export default class Arena {
   // Tower: stone base and shaft, a small roofed cage holding a glowing orb in its team color
   setTower(base, color) {
     const stone = this.toon('#a59f95')
-    addOutlined(this.group, new THREE.CylinderGeometry(0.6, 0.75, 0.5, 8).translate(0, 0.25, 0), stone, { position: base.toArray(), outline: 1.06 })
-    addOutlined(this.group, new THREE.CylinderGeometry(0.32, 0.48, 2.2, 8).translate(0, 1.6, 0), stone, { position: base.toArray(), outline: [1.1, 1.02, 1.1] })
+    addOutlined(this.group, new THREE.CylinderGeometry(0.6, 0.75, 0.5, 8).translate(0, 0.25, 0), stone, { position: [base.x, -sink, base.z], outline: 1.06 })
+    addOutlined(this.group, new THREE.CylinderGeometry(0.32, 0.48, 2.2, 8).translate(0, 1.6, 0), stone, { position: [base.x, -sink, base.z], outline: [1.1, 1.02, 1.1] })
     const metal = this.toon('#3b4252')
     for (const [x, z] of [[-0.3, -0.3], [0.3, -0.3], [-0.3, 0.3], [0.3, 0.3]]) {
       const bar = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.8, 0.07), metal)
