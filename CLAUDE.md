@@ -36,6 +36,8 @@ Bugs that already happened once. Go through this list for every change that touc
   - Nothing starts exactly on the surface it stands on: start feet and bases a little below it (`sink` = 0.04). This includes outline hulls: their bottom face is drawn from the inside, so it shows from above.
   - Surfaces stacked on each other are at least 0.03 apart (a pitch on its pad, a deck above the plateau).
   - Side faces too: a box on top of another box is a little shorter than it, never flush at the ends.
+  - Overlapping parts: every face of one stays 0.03 away from the other's faces and outline hull, back faces included (the minion's shield plate and board, a trim flush with its pauldron's outline).
+- **Ragged shadows on faces turned from the sun.** Small props get a jagged penumbra of their own shadow on their shaded sides: turn `receiveShadow` off on such a prop (the Overlord plinth).
   - Run `npm run check:flicker` (about 30 s; every landmark and island, from several sides). It must pass; diff images show the flicker in magenta.
 
 ## Glossary
@@ -55,6 +57,7 @@ Shared vocabulary between the user and Claude. Use these words with these meanin
 **Interaction**
 - **Landmark**: an object the character can interact with (Double Tap phone, Air France Industries hangar, Fastory stadium, a vehicle). **Interaction zone**: the circle where it becomes **active**. **Ring**: the ground circle showing that zone, styled by its **interaction kind** (`interactionKinds.js`): **travel** = red dashed ring with rotating dashes (vehicles), **experience** = orange solid ring pulsing inward (projects, stories), **challenge** = purple double ring pulsing outward (mini-games). **Prompt**: the floating "E · ..." bubble.
 - **Open**: interacting with a project landmark: the **focus** (camera glide to its **focus pose**), the dimmed **backdrop** and the **card** (project card: status band, summary, highlights, role, stack, lesson, links). **Tap / react**: pressing E while open. **Lesson**: the card's closing pull quote.
+- **Overlord**: the user's mobile game in the making (Unity, iOS and Android; slow, tactics-based). Its **zone** is the hex **board** at the entrepreneur island's south-east, with a raised **plinth** where **units** (the game's characters, e.g. the **melee minion**) are shown.
 - **Project**: an entry in `projects.js` shown on a card. **Story beat**: a hobby island card about how a story shaped the user.
 
 **Transport**
