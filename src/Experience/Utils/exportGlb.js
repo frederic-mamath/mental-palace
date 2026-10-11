@@ -11,11 +11,12 @@ import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js'
 //   material: the "inverted hull" outline, which renders with any standard shader and back-face culling.
 //   They're named `<part>_outline`, so they're easy to find and switch off
 // - unnamed meshes are named after their material (`robe`, `steel_2`...); groups keep their names, as
-//   pivots to animate
+//   pivots to animate; nodes are written as translation / rotation / scale (not matrices), the joints'
+//   rest pose as an animator sees it
 export async function exportGlb(object, { outlines = true } = {}) {
   const copy = prepareForExport(object, { outlines })
   const exporter = new GLTFExporter()
-  return exporter.parseAsync(copy, { binary: true, onlyVisible: true })
+  return exporter.parseAsync(copy, { binary: true, onlyVisible: true, trs: true })
 }
 
 export function prepareForExport(object, { outlines = true } = {}) {

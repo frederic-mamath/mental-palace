@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { createGradientMap, createOutlineMaterial } from '../toon.js'
+import Unit from './Unit.js'
 
 const colors = {
   robe: '#2f5fc4',
@@ -17,23 +17,16 @@ const colors = {
 // and a crest knob, big sloped pauldrons, a stone hammer with a blue crystal held head down in its right
 // hand and a tall steel-and-wood shield in its left. Blocky chamfered pieces, like a figurine.
 //
-// A standalone model (no scene, no world), so it can be shown anywhere and exported to glTF for the Unity
-// game (npm run export:units). Its pivots are named groups (upper, head, shoulder_L/R, hammer, shield). Local axes: facing +z, y up, standing on y = 0; its right hand is on -x.
-// `update(elapsed)` plays a slow idle: breathing, the head looking around, the hammer swaying.
-export default class MeleeMinion {
+// Joints as in Unit.js; the pauldrons ride the shoulders, the hammer and the shield are groups under the
+// hands (to swap weapons). `update(elapsed)` plays a slow idle: breathing, the head looking around, the
+// hammer swaying.
+export default class MeleeMinion extends Unit {
   constructor() {
-    this.gradientMap = createGradientMap()
-    this.outlineMaterial = createOutlineMaterial()
-    // Named, so exported parts and materials are recognizable (see Utils/exportGlb.js)
-    this.materials = Object.fromEntries(Object.entries(colors).map(([name, color]) => [name, new THREE.MeshToonMaterial({ name, color, gradientMap: this.gradientMap })]))
-    this.materials.ink = new THREE.MeshBasicMaterial({ name: 'ink', color: colors.ink })
+    super('MeleeMinion', colors)
 
-    this.group = new THREE.Group()
-    this.group.name = 'MeleeMinion'
     // Everything above the belt breathes; the robe stays put
-    this.upper = new THREE.Group()
-    this.upper.name = 'upper'
-    this.group.add(this.upper)
+    this.waist = this.joint('waist', this.group, [0, 0.42, 0])
+    this.neck = this.joint('neck', this.waist, [0, 1.69, 0.04])
 
     this.setRobe()
     this.setTorso()
@@ -44,46 +37,6 @@ export default class MeleeMinion {
 
     // In its own space: covers the body, the hammer and the shield
     this.colliders = [{ position: new THREE.Vector3(0, 0, 0.1), radius: 1.5 }]
-  }
-
-  // Adds a mesh with an ink hull (scale `outline`, a number or [x, y, z]) to `parent`
-  add(geometry, material, parent, { position = [0, 0, 0], rotation = [0, 0, 0], outline = 1.06 } = {}) {
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.position.set(...position)
-    mesh.rotation.set(...rotation)
-    mesh.castShadow = true
-    mesh.receiveShadow = true
-    parent.add(mesh)
-    if (outline) {
-      const hull = new THREE.Mesh(geometry, this.outlineMaterial)
-      hull.position.copy(mesh.position)
-      hull.rotation.copy(mesh.rotation)
-      if (Array.isArray(outline)) hull.scale.set(...outline)
-      else hull.scale.setScalar(outline)
-      parent.add(hull)
-    }
-    return mesh
-  }
-
-  // Flat faces (unshared vertices): MeshToonMaterial has no flatShading
-  facet(geometry) {
-    const flat = geometry.index ? geometry.toNonIndexed() : geometry
-    flat.computeVertexNormals()
-    return flat
-  }
-
-  // A box with chamfered edges, centered on the origin
-  chamferBox(width, height, depth, bevel = 0.04) {
-    const shape = new THREE.Shape()
-    const w = width / 2 - bevel
-    const h = height / 2 - bevel
-    shape.moveTo(-w, -h)
-    shape.lineTo(w, -h)
-    shape.lineTo(w, h)
-    shape.lineTo(-w, h)
-    shape.closePath()
-    const geometry = new THREE.ExtrudeGeometry(shape, { depth: depth - bevel * 2, bevelEnabled: true, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 1 })
-    return this.facet(geometry.translate(0, 0, -(depth - bevel * 2) / 2))
   }
 
   // Octagonal robe flaring toward the ground, a lighter panel down the front, a belt with a buckle
@@ -114,16 +67,14 @@ export default class MeleeMinion {
 
   // Chest and a steel collar
   setTorso() {
-    this.add(this.chamferBox(0.92, 0.5, 0.62, 0.06), this.materials.chest, this.upper, { position: [0, 1.22, 0], outline: [1.04, 1.06, 1.06] })
-    this.add(this.chamferBox(0.5, 0.26, 0.42, 0.03), this.materials.steelDark, this.upper, { position: [0, 1.56, 0], outline: 1.06 })
+    this.add(this.chamferBox(0.92, 0.5, 0.62, 0.06), this.materials.chest, this.waist, { position: this.local(this.waist, [0, 1.22, 0]), outline: [1.04, 1.06, 1.06] })
+    this.add(this.chamferBox(0.5, 0.26, 0.42, 0.03), this.materials.steelDark, this.waist, { position: this.local(this.waist, [0, 1.56, 0]), outline: 1.06 })
   }
 
   // Shield-shaped helmet: flat brow, cheeks tapering to a chin; slanted eye slits, a chin gem, a crest
   setHead() {
-    this.head = new THREE.Group()
-    this.head.name = 'head'
-    this.head.position.set(0, 1.9, 0.04)
-    this.upper.add(this.head)
+    // The helmet's center, 0.21 above the neck
+    const at = (x, y, z) => [x, y + 0.21, z]
 
     const depth = 0.44
     const outline = new THREE.Shape()
@@ -135,7 +86,7 @@ export default class MeleeMinion {
     outline.lineTo(-0.32, 0.02)
     outline.closePath()
     const helmet = new THREE.ExtrudeGeometry(outline, { depth: depth - 0.06, bevelEnabled: true, bevelSize: 0.03, bevelThickness: 0.03, bevelSegments: 1 })
-    this.add(this.facet(helmet.translate(0, 0, -(depth - 0.06) / 2)), this.materials.steel, this.head, { outline: 1.07 })
+    this.add(this.facet(helmet.translate(0, 0, -(depth - 0.06) / 2)), this.materials.steel, this.neck, { position: at(0, 0, 0), outline: 1.07 })
 
     // Eye slits: inner corners low, for the frown
     const front = depth / 2 + 0.006
@@ -147,38 +98,44 @@ export default class MeleeMinion {
       eye.lineTo(0.07 * side, -0.07)
       eye.closePath()
       // ShapeGeometry fixes the winding of the mirrored slit itself
-      this.add(new THREE.ShapeGeometry(eye), this.materials.ink, this.head, { position: [0, 0.02, front], outline: false })
+      this.add(new THREE.ShapeGeometry(eye), this.materials.ink, this.neck, { position: at(0, 0.02, front), outline: false })
     }
-    this.add(this.facet(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 6).rotateX(Math.PI / 2)), this.materials.crystal, this.head, { position: [0, -0.17, front], outline: 1.2 })
-    this.add(this.chamferBox(0.13, 0.26, 0.15, 0.02), this.materials.steel, this.head, { position: [0, 0.36, -0.04], outline: 1.1 })
+    this.add(this.facet(new THREE.CylinderGeometry(0.07, 0.07, 0.05, 6).rotateX(Math.PI / 2)), this.materials.crystal, this.neck, { position: at(0, -0.17, front), outline: 1.2 })
+    this.add(this.chamferBox(0.13, 0.26, 0.15, 0.02), this.materials.steel, this.neck, { position: at(0, 0.36, -0.04), outline: 1.1 })
   }
 
   // Sloped pauldrons with a dark trim, and blocky arms reaching down to the hammer (right) and the shield (left)
   setArms() {
+    this.hands = {}
     for (const side of [-1, 1]) {
-      const shoulder = new THREE.Group()
-      shoulder.name = side < 0 ? 'shoulder_R' : 'shoulder_L'
-      shoulder.position.set(0.7 * side, 1.52, 0)
-      shoulder.rotation.z = -0.42 * side
-      this.upper.add(shoulder)
-      this.add(this.chamferBox(0.62, 0.36, 0.74, 0.06), this.materials.steel, shoulder, { outline: [1.05, 1.08, 1.05] })
-      // Trim: clearly wider than the pauldron's outline hull (sides 0.005 apart z-fought)
-      this.add(this.chamferBox(0.72, 0.09, 0.84, 0.02), this.materials.steelDark, shoulder, { position: [0, -0.2, 0], outline: [1.04, 1.2, 1.04] })
+      const suffix = side < 0 ? 'R' : 'L'
+      const shoulder = this.joint(`shoulder_${suffix}`, this.waist, [0.8 * side, 1.38, 0.02])
+      const elbow = this.joint(`elbow_${suffix}`, shoulder, [0.93 * side, 0.95, 0.05])
+      this.hands[suffix] = this.joint(`hand_${suffix}`, elbow, [1.02 * side, 0.72, 0.26])
 
-      // Upper arm down and out from under the pauldron, forearm forward to the hand
-      this.add(this.chamferBox(0.24, 0.42, 0.24, 0.03), this.materials.steel, this.upper, { position: [0.86 * side, 1.18, 0.02], rotation: [0, 0, 0.25 * side], outline: 1.08 })
-      this.add(this.chamferBox(0.13, 0.13, 0.13, 0.02), this.materials.steelDark, this.upper, { position: [0.93 * side, 0.95, 0.05], outline: 1.15 })
-      this.add(this.chamferBox(0.26, 0.4, 0.26, 0.03), this.materials.steel, this.upper, { position: [0.98 * side, 0.78, 0.16], rotation: [0.5, 0, 0.12 * side], outline: 1.08 })
+      const pauldron = new THREE.Group()
+      pauldron.name = `pauldron_${suffix}`
+      pauldron.position.fromArray(this.local(shoulder, [0.7 * side, 1.52, 0]))
+      pauldron.rotation.z = -0.42 * side
+      shoulder.add(pauldron)
+      this.add(this.chamferBox(0.62, 0.36, 0.74, 0.06), this.materials.steel, pauldron, { outline: [1.05, 1.08, 1.05] })
+      // Trim: clearly wider than the pauldron's outline hull (sides 0.005 apart z-fought)
+      this.add(this.chamferBox(0.72, 0.09, 0.84, 0.02), this.materials.steelDark, pauldron, { position: [0, -0.2, 0], outline: [1.04, 1.2, 1.04] })
+
+      // Upper arm down and out from under the pauldron, the elbow, the forearm forward to the hand
+      this.add(this.chamferBox(0.24, 0.42, 0.24, 0.03), this.materials.steel, shoulder, { position: this.local(shoulder, [0.86 * side, 1.18, 0.02]), rotation: [0, 0, 0.25 * side], outline: 1.08 })
+      this.add(this.chamferBox(0.13, 0.13, 0.13, 0.02), this.materials.steelDark, elbow, { outline: 1.15 })
+      this.add(this.chamferBox(0.26, 0.4, 0.26, 0.03), this.materials.steel, elbow, { position: this.local(elbow, [0.98 * side, 0.78, 0.16]), rotation: [0.5, 0, 0.12 * side], outline: 1.08 })
     }
   }
 
   // Held head down at the right side: a stone block with a brown rivet on its outer face, a blue crystal on
   // top where the short handle meets the fist
   setHammer() {
+    // In the fist; the head's bottom stays above the feet (y = 0)
     this.hammer = new THREE.Group()
     this.hammer.name = 'hammer'
-    this.hammer.position.set(-1.02, 0.72, 0.26) // the fist; the head's bottom stays above the feet (y = 0)
-    this.upper.add(this.hammer)
+    this.hands.R.add(this.hammer)
 
     this.add(this.facet(new THREE.CylinderGeometry(0.06, 0.06, 0.34, 6)), this.materials.steelDark, this.hammer, { position: [-0.1, -0.06, 0], rotation: [0, 0, -0.35], outline: 1.25 })
     this.add(this.facet(new THREE.CylinderGeometry(0.12, 0.14, 0.12, 6)), this.materials.crystal, this.hammer, { position: [-0.2, -0.17, 0], outline: 1.15 })
@@ -191,9 +148,9 @@ export default class MeleeMinion {
   setShield() {
     this.shield = new THREE.Group()
     this.shield.name = 'shield'
-    this.shield.position.set(1.3, 0.98, 0.66)
+    this.shield.position.fromArray(this.local(this.hands.L, [1.3, 0.98, 0.66]))
     this.shield.rotation.y = -0.28
-    this.upper.add(this.shield)
+    this.hands.L.add(this.shield)
 
     const thickness = 0.14
     this.add(this.chamferBox(0.74, 1.0, thickness, 0.03), this.materials.wood, this.shield, { position: [0, -0.4, 0], outline: [1.04, 1.03, 1.3] })
@@ -232,10 +189,10 @@ export default class MeleeMinion {
 
   update(elapsed) {
     // Breathing: a slow rise of everything above the belt
-    this.upper.position.y = Math.sin(elapsed * 1.6) * 0.025
+    this.waist.position.y = 0.42 + Math.sin(elapsed * 1.6) * 0.025
     // Looking around now and then
-    this.head.rotation.y = Math.sin(elapsed * 0.45) * 0.25 * Math.max(Math.sin(elapsed * 0.17), 0)
-    // The hammer's weight swings a little
-    this.hammer.rotation.z = Math.sin(elapsed * 1.1) * 0.05
+    this.neck.rotation.y = Math.sin(elapsed * 0.45) * 0.25 * Math.max(Math.sin(elapsed * 0.17), 0)
+    // The hammer's weight swings the hand a little
+    this.hands.R.rotation.z = Math.sin(elapsed * 1.1) * 0.05
   }
 }
