@@ -5,7 +5,8 @@ import { createGradientMap, createOutlineMaterial } from '../toon.js'
 // for the Unity game (npm run export:units, see units.js).
 //
 // Rig: rigid parts under named joints (groups), so Unity animates them as a Generic rig. Every unit has the
-// same joints, at rest without rotation:
+// same joints; parts are modeled with the joints unrotated, then a unit's stance may rotate them (that pose
+// is the rest pose in the .glb):
 //
 //   <Unit> (origin at the feet)
 //   └ waist                      the belt; the robe stays on the root

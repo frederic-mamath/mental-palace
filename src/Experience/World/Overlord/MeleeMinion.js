@@ -14,12 +14,13 @@ const colors = {
 
 // Overlord's melee unit, from the user's model (a nod to the melee minions of MOBAs): a blue robe with a
 // lighter front panel and a brown belt, a grey shield-shaped helmet with angry eye slits, a blue chin gem
-// and a crest knob, big sloped pauldrons, a stone hammer with a blue crystal held head down in its right
-// hand and a tall steel-and-wood shield in its left. Blocky chamfered pieces, like a figurine.
+// and a crest knob, big sloped pauldrons, a stone hammer with a blue crystal raised in its right hand,
+// ready to strike, and a tall steel-and-wood shield in its left. Blocky chamfered pieces, like a figurine.
 //
 // Joints as in Unit.js; the pauldrons ride the shoulders, the hammer and the shield are groups under the
-// hands (to swap weapons). `update(elapsed)` plays a slow idle: breathing, the head looking around, the
-// hammer swaying.
+// hands (to swap weapons). The parts are modeled arms down; the stance raises the right arm with the joints
+// (`setStance`), so the rest pose in the .glb is the raised one. `update(elapsed)` plays a slow idle:
+// breathing, the head looking around, the raised hammer swaying.
 export default class MeleeMinion extends Unit {
   constructor() {
     super('MeleeMinion', colors)
@@ -34,6 +35,7 @@ export default class MeleeMinion extends Unit {
     this.setArms()
     this.setHammer()
     this.setShield()
+    this.setStance()
 
     // In its own space: covers the body, the hammer and the shield
     this.colliders = [{ position: new THREE.Vector3(0, 0, 0.1), radius: 1.5 }]
@@ -107,6 +109,7 @@ export default class MeleeMinion extends Unit {
   // Sloped pauldrons with a dark trim, and blocky arms reaching down to the hammer (right) and the shield (left)
   setArms() {
     this.hands = {}
+    this.pauldrons = {}
     for (const side of [-1, 1]) {
       const suffix = side < 0 ? 'R' : 'L'
       const shoulder = this.joint(`shoulder_${suffix}`, this.waist, [0.8 * side, 1.38, 0.02])
@@ -118,6 +121,7 @@ export default class MeleeMinion extends Unit {
       pauldron.position.fromArray(this.local(shoulder, [0.7 * side, 1.52, 0]))
       pauldron.rotation.z = -0.42 * side
       shoulder.add(pauldron)
+      this.pauldrons[suffix] = pauldron
       this.add(this.chamferBox(0.62, 0.36, 0.74, 0.06), this.materials.steel, pauldron, { outline: [1.05, 1.08, 1.05] })
       // Trim: clearly wider than the pauldron's outline hull (sides 0.005 apart z-fought)
       this.add(this.chamferBox(0.72, 0.09, 0.84, 0.02), this.materials.steelDark, pauldron, { position: [0, -0.2, 0], outline: [1.04, 1.2, 1.04] })
@@ -187,12 +191,29 @@ export default class MeleeMinion extends Unit {
     this.add(new THREE.ShapeGeometry(frame), this.materials.ink, this.shield, { position: [0, 0.48, 0.02 + plateDepth / 2 + 0.006], outline: false })
   }
 
+  // Ready to strike: the right arm raised out to the side, the forearm up and back, the hammer cocked beside
+  // the head. The pauldron follows part of the shoulder's raise (fully, it swung down into the chest; not at
+  // all, the upper arm went through it)
+  setStance() {
+    const raise = -1.3
+    this.shoulders = { R: this.group.getObjectByName('shoulder_R') }
+    this.shoulders.R.rotation.z = raise
+    this.group.getObjectByName('elbow_R').rotation.set(-0.5, 0, -1.7)
+    this.hands.R.rotation.set(-0.5, 0, 0.3)
+    this.handRest = this.hands.R.rotation.z
+
+    const follow = 0.35
+    const back = (follow - 1) * raise // undoes the rest of the raise, around the shoulder
+    this.pauldrons.R.position.applyAxisAngle(new THREE.Vector3(0, 0, 1), back)
+    this.pauldrons.R.rotation.z += back
+  }
+
   update(elapsed) {
     // Breathing: a slow rise of everything above the belt
     this.waist.position.y = 0.42 + Math.sin(elapsed * 1.6) * 0.025
     // Looking around now and then
     this.neck.rotation.y = Math.sin(elapsed * 0.45) * 0.25 * Math.max(Math.sin(elapsed * 0.17), 0)
-    // The hammer's weight swings the hand a little
-    this.hands.R.rotation.z = Math.sin(elapsed * 1.1) * 0.05
+    // The raised hammer's weight sways the hand a little
+    this.hands.R.rotation.z = this.handRest + Math.sin(elapsed * 1.1) * 0.05
   }
 }
