@@ -16,6 +16,16 @@ New features plug into existing systems rather than being built from scratch nex
 - **Layouts are seeded and stable.** Decor uses `createRandom(seed)`, one seed per kind and island. Adding things must not move what exists: remove pieces after placement (`exclude` / `cleared`) instead of adding avoid zones, add late colliders after the decor, and check with a decor dump that untouched instances are identical.
 - **Verify in a real browser.** Headless Chrome (puppeteer-core + the installed Chrome, swiftshader) for screenshots, numeric checks (paths, timings, collisions) and before/after comparisons; the user then tests manually.
 
+### Known pitfalls (check before committing a scene change)
+
+Bugs that already happened once. Go through this list for every change that touches the 3D scene, and add a line when a new kind of bug is found.
+
+- **Z-fighting (flicker).** Two surfaces at the same depth flicker as the camera moves (the pier deck, the stadium's wheel stand, the Eiffel lawn's path).
+  - Nothing starts exactly on the surface it stands on: start feet and bases a little below it (`sink` = 0.04). This includes outline hulls: their bottom face is drawn from the inside, so it shows from above.
+  - Surfaces stacked on each other are at least 0.03 apart (a pitch on its pad, a deck above the plateau).
+  - Side faces too: a box on top of another box is a little shorter than it, never flush at the ends.
+  - Run `npm run check:flicker` (about 30 s; every landmark and island, from several sides). It must pass; diff images show the flicker in magenta.
+
 Existing systems (all under `src/Experience/World/` unless noted):
 
 | System | Plug in by |
