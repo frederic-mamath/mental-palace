@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "check:flicker": "node scripts/check-flicker.mjs"
+    "check:flicker": "node scripts/check-flicker.mjs",
+    "export:units": "node scripts/export-units.mjs"
   },
   "dependencies": {
     "lil-gui": "^0.21.0",

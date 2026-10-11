@@ -17,15 +17,16 @@ const colors = {
 // and a crest knob, big sloped pauldrons, a stone hammer with a blue crystal held head down in its right
 // hand and a tall steel-and-wood shield in its left. Blocky chamfered pieces, like a figurine.
 //
-// A standalone model (no scene, no world), so it can be shown anywhere and exported (e.g. to glTF for
-// the Unity game). Local axes: facing +z, y up, standing on y = 0; its right hand is on -x.
+// A standalone model (no scene, no world), so it can be shown anywhere and exported to glTF for the Unity
+// game (npm run export:units). Its pivots are named groups (upper, head, shoulder_L/R, hammer, shield). Local axes: facing +z, y up, standing on y = 0; its right hand is on -x.
 // `update(elapsed)` plays a slow idle: breathing, the head looking around, the hammer swaying.
 export default class MeleeMinion {
   constructor() {
     this.gradientMap = createGradientMap()
     this.outlineMaterial = createOutlineMaterial()
-    this.materials = Object.fromEntries(Object.entries(colors).map(([name, color]) => [name, new THREE.MeshToonMaterial({ color, gradientMap: this.gradientMap })]))
-    this.materials.ink = new THREE.MeshBasicMaterial({ color: colors.ink })
+    // Named, so exported parts and materials are recognizable (see Utils/exportGlb.js)
+    this.materials = Object.fromEntries(Object.entries(colors).map(([name, color]) => [name, new THREE.MeshToonMaterial({ name, color, gradientMap: this.gradientMap })]))
+    this.materials.ink = new THREE.MeshBasicMaterial({ name: 'ink', color: colors.ink })
 
     this.group = new THREE.Group()
     this.group.name = 'MeleeMinion'
@@ -120,6 +121,7 @@ export default class MeleeMinion {
   // Shield-shaped helmet: flat brow, cheeks tapering to a chin; slanted eye slits, a chin gem, a crest
   setHead() {
     this.head = new THREE.Group()
+    this.head.name = 'head'
     this.head.position.set(0, 1.9, 0.04)
     this.upper.add(this.head)
 
@@ -155,6 +157,7 @@ export default class MeleeMinion {
   setArms() {
     for (const side of [-1, 1]) {
       const shoulder = new THREE.Group()
+      shoulder.name = side < 0 ? 'shoulder_R' : 'shoulder_L'
       shoulder.position.set(0.7 * side, 1.52, 0)
       shoulder.rotation.z = -0.42 * side
       this.upper.add(shoulder)
@@ -173,6 +176,7 @@ export default class MeleeMinion {
   // top where the short handle meets the fist
   setHammer() {
     this.hammer = new THREE.Group()
+    this.hammer.name = 'hammer'
     this.hammer.position.set(-1.02, 0.66, 0.26) // the fist
     this.upper.add(this.hammer)
 
@@ -186,6 +190,7 @@ export default class MeleeMinion {
   // with a dark strip down the middle
   setShield() {
     this.shield = new THREE.Group()
+    this.shield.name = 'shield'
     this.shield.position.set(1.3, 0.98, 0.66)
     this.shield.rotation.y = -0.28
     this.upper.add(this.shield)

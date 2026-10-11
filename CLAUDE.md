@@ -27,6 +27,7 @@ Existing systems (all under `src/Experience/World/` unless noted):
 | Decor (`Decor/`) | Grass, Flowers, Rocks, PalmTrees with `island`, seeded `random`, `avoid`, `exclude` |
 | Effects (`Effects/`) | self-contained pooled effects (ZoneRing, HeartPop, DustBurst, Afterimages, BoomRing, SpeedLines) with `spawn`/`update` |
 | Wind (`toon.js` `applyWind`, `WindField.js`) | `applyWind(material, ...)` on any instanced plant material |
+| Export (`src/Experience/Utils/exportGlb.js`) | a standalone model (a `group` with named materials and pivot groups, no world dependencies) listed in `Overlord/units.js`: `npm run export:units` writes `exports/overlord/<name>.glb` (toon materials become PBR, outline hulls become inverted hulls) |
 
 ## Known pitfalls (check before committing a scene change)
 
