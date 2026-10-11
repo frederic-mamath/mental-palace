@@ -14,6 +14,10 @@ const bowl = { innerX: 4.6, innerZ: 7.6, tier: 0.9, tiers: 3, tierHeight: 0.6, o
 const outerX = bowl.innerX + bowl.tier * bowl.tiers
 const outerZ = bowl.innerZ + bowl.tier * bowl.tiers
 
+// Surface heights. Nothing starts exactly on a surface: coplanar faces z-fight (flicker), and so do the
+// bottoms of outline hulls, drawn from the inside. Feet start `sink` below what they stand on instead.
+const levels = { padTop: 0.08, pitchTop: 0.12, sink: 0.04 }
+
 // Project landmark: a football stadium on the city's cape, for Fastory (mobile ads turned into games).
 // A horseshoe of stands in the brand colors around the pitch, open toward the city, four floodlights,
 // and a giant vertical phone as the scoreboard, playing a story-style ad (the brand, a sweepstakes, a
@@ -91,7 +95,7 @@ export default class FastoryStadium {
 
   // Stone pad under the whole stadium, and the screen's apron
   setGround() {
-    const pad = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 0.08, 64).translate(0, 0.04, 0), this.toon(colors.pad))
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, levels.padTop, 64).translate(0, levels.padTop / 2, 0), this.toon(colors.pad))
     pad.scale.set(outerX + 0.8, 1, outerZ + 0.8)
     this.group.add(pad)
   }
@@ -101,7 +105,7 @@ export default class FastoryStadium {
     const length = 10.6
     const pitch = new THREE.Mesh(new THREE.PlaneGeometry(width, length), this.toon('#ffffff', { map: this.createPitchTexture() }))
     pitch.rotation.x = -Math.PI / 2
-    pitch.position.y = 0.09
+    pitch.position.y = levels.pitchTop
     this.group.add(pitch)
 
     // Goals at both ends: white posts and crossbar, a dark net at the back
@@ -109,7 +113,7 @@ export default class FastoryStadium {
     const net = new THREE.MeshBasicMaterial({ color: '#c9ced6', transparent: true, opacity: 0.55, side: THREE.DoubleSide })
     for (const side of [-1, 1]) {
       const goal = new THREE.Group()
-      goal.position.set(0, 0.09, side * (length / 2 - 0.05))
+      goal.position.set(0, levels.pitchTop - levels.sink, side * (length / 2 - 0.05))
       this.group.add(goal)
       for (const x of [-0.8, 0.8]) this.outlined(new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1).translate(x, 0.4, 0), white), 1.25, goal)
       this.outlined(new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.1, 0.1).translate(0, 0.8, 0), white), 1.25, goal)
@@ -193,7 +197,7 @@ export default class FastoryStadium {
     for (const t of [0.6, -0.6, 2.05, -2.05]) {
       const base = this.ellipsePoint(outerX + 0.9, outerZ + 0.9, t)
       const mast = new THREE.Group()
-      mast.position.copy(base)
+      mast.position.copy(base).setY(-levels.sink)
       mast.rotation.y = Math.atan2(base.x, base.z) + Math.PI // local +z toward the pitch's center
       this.group.add(mast)
       this.outlined(new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.2, 8, 8).translate(0, 4, 0), steel), [1.35, 1.01, 1.35], mast)
@@ -425,7 +429,7 @@ export default class FastoryStadium {
     const radius = 1.25
     this.wheelSegments = this.project.wheel
     const stand = new THREE.Group()
-    stand.position.set(0.4, 0.09, 0)
+    stand.position.set(0.4, levels.pitchTop - levels.sink, 0)
     stand.rotation.y = -Math.PI / 2 // local +z (the wheel's face) toward -x
     this.group.add(stand)
     this.wheelStand = stand
@@ -528,7 +532,7 @@ export default class FastoryStadium {
     for (let i = 0; i < bowl.tiers; i++) {
       const x = bowl.innerX + (i + 0.5) * bowl.tier
       const z = bowl.innerZ + (i + 0.5) * bowl.tier
-      const y = bowl.tierHeight * (i + 1)
+      const y = bowl.tierHeight * (i + 1) - levels.sink
       const steps = Math.floor(((end - start) * (x + z)) / 2 / 0.55)
       for (let s = 0; s <= steps; s++) {
         const t = start + ((end - start) * s) / steps
