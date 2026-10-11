@@ -122,7 +122,7 @@ export default class OverlordZone {
     ctx.fillStyle = colors.ink
     ctx.font = `64px "Bebas Neue", Impact, sans-serif`
     ctx.fillText(this.project.title.toUpperCase(), w / 2, h * 0.4)
-    ctx.font = `600 17px -apple-system, "Helvetica Neue", Arial, sans-serif`
+    ctx.font = `600 15px -apple-system, "Helvetica Neue", Arial, sans-serif`
     ctx.fillText(this.project.tagline, w / 2, h * 0.76)
     texture.needsUpdate = true
   }
