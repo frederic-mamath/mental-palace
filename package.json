@@ -6,13 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:flicker": "node scripts/check-flicker.mjs"
   },
   "dependencies": {
     "lil-gui": "^0.21.0",
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "pngjs": "^7.0.0",
+    "puppeteer-core": "^25.13.0",
     "vite": "^8.3.2"
   },
   "engines": {
