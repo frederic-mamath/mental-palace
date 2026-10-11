@@ -7,11 +7,15 @@ const colors = { stone: '#b4b0a6', blue: '#6f88b8', red: '#b8746f', plinth: '#8d
 // Tiles and props standing on the ground start this far below it (see "Known pitfalls" in CLAUDE.md)
 const sink = 0.04
 const hex = { size: 0.85, gap: 0.08, rings: 2, top: 0.1 }
-// Raised tiles where units are shown, in axial coordinates [q, r] (the middle tile is [0, 0])
-const plinthTiles = [
-  [-1, 0],
-  [1, 0],
+// Raised tiles where units are shown: a tile in axial coordinates [q, r] (the middle one is [0, 0]), with
+// `rings` of raised tiles around it for a big unit (a stage)
+const plinthSpots = [
+  { tile: [-2, 1] },
+  { tile: [1, 1] },
+  { tile: [0, 0], rings: 1 },
 ]
+const hexDistance = ([q1, r1], [q2, r2]) => (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs(q1 + r1 - q2 - r2)) / 2
+
 
 // The entrepreneur island's zone for Overlord, the user's slow, tactics-based mobile game (in the making):
 // a hexagonal game board in the grass, the player's rows (blue) facing the spawn point and the enemy's
@@ -63,7 +67,7 @@ export default class OverlordZone {
     const { size, gap, rings, top } = hex
     const tile = new THREE.CylinderGeometry(size - gap, size - gap, top + sink, 6).translate(0, (top - sink) / 2, 0)
     const materials = { stone: this.toon(colors.stone), blue: this.toon(colors.blue), red: this.toon(colors.red) }
-    const isPlinth = (q, r) => plinthTiles.some(([pq, pr]) => pq === q && pr === r)
+    const isPlinth = (q, r) => plinthSpots.some(({ tile, rings = 0 }) => hexDistance(tile, [q, r]) <= rings)
     for (let q = -rings; q <= rings; q++) {
       for (let r = -rings; r <= rings; r++) {
         if (Math.abs(q + r) > rings || isPlinth(q, r)) continue
@@ -78,16 +82,27 @@ export default class OverlordZone {
     // Raised tiles: plinths for the units on show
     this.plinthTop = 0.45
     // Unshared vertices: flat faces, so the sides don't get smooth-normal shadow stripes
-    const plinthGeometry = new THREE.CylinderGeometry(size - gap, size + 0.05, this.plinthTop + sink, 6).translate(0, (this.plinthTop - sink) / 2, 0).toNonIndexed()
-    plinthGeometry.computeVertexNormals()
+    const pillar = (bottom) => {
+      const geometry = new THREE.CylinderGeometry(size - gap, bottom, this.plinthTop + sink, 6).translate(0, (this.plinthTop - sink) / 2, 0).toNonIndexed()
+      geometry.computeVertexNormals()
+      return geometry
+    }
+    const plinthGeometry = pillar(size + 0.05)
+    // A stage's pillars flare less, so neighbors don't cut into each other
+    const stageGeometry = pillar(size - 0.03)
     const plinthMaterial = this.toon(colors.plinth)
-    this.plinths = plinthTiles.map(([q, r]) => {
-      const plinth = new THREE.Mesh(plinthGeometry, plinthMaterial)
-      plinth.position.copy(this.tilePosition(q, r))
-      this.outlined(plinth, [1.04, 1.06, 1.04])
-      // Its sides face away from the sun: received shadows only add a ragged penumbra there
-      plinth.receiveShadow = false
-      return plinth.position.clone().setY(this.plinthTop - sink)
+    this.plinths = plinthSpots.map(({ tile, rings = 0 }) => {
+      for (let q = -rings; q <= rings; q++) {
+        for (let r = -rings; r <= rings; r++) {
+          if (Math.abs(q + r) > rings) continue
+          const plinth = new THREE.Mesh(rings ? stageGeometry : plinthGeometry, plinthMaterial)
+          plinth.position.copy(this.tilePosition(tile[0] + q, tile[1] + r))
+          this.outlined(plinth, [1.04, 1.06, 1.04])
+          // Its sides face away from the sun: received shadows only add a ragged penumbra there
+          plinth.receiveShadow = false
+        }
+      }
+      return this.tilePosition(...tile).setY(this.plinthTop - sink)
     })
   }
 
@@ -142,7 +157,7 @@ export default class OverlordZone {
   }
 
   // Puts a unit (an object with a `group`, and optionally `update(elapsed)` and `colliders` in its local
-  // space) on a plinth (an index in plinthTiles), facing the front
+  // space) on a plinth (an index in plinthSpots), facing the front
   showUnit(unit, plinth = 0) {
     unit.group.position.copy(this.plinths[plinth])
     this.group.add(unit.group)
