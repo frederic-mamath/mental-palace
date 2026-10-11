@@ -56,6 +56,17 @@ const projects = {
     lesson:
       'I used to be very addicted to video games. To break free, I had to learn the signals that kept bringing me back, and I found out what engaged me without my knowing it. At Fastory, I turned that around: my challenge was to make something fun out of a boring ad you would only look at.',
     accent: '#1d2b64',
+    // On the stadium's screen and wheel (not on the card): a leaderboard where the visitor ("you") climbs
+    // with every tap, and the sweepstakes wheel's segments
+    leaderboard: [
+      { name: 'GOAT', score: 9870 },
+      { name: 'Ninja_77', score: 9420 },
+      { name: 'PixelKid', score: 8990 },
+      { name: 'Lucky7', score: 8310 },
+      { name: 'YOU', score: 7980, you: true },
+      { name: 'Rookie', score: 6150 },
+    ],
+    wheel: ['WIN', '100', '200', 'x2', '500', 'WIN', '50', 'x3'],
   },
 }
 
