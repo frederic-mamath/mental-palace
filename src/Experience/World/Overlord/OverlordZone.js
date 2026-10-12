@@ -13,6 +13,7 @@ const plinthSpots = [
   { tile: [-2, 1] },
   { tile: [1, 1] },
   { tile: [0, 0], rings: 1 },
+  { tile: [1, -2] },
 ]
 const hexDistance = ([q1, r1], [q2, r2]) => (Math.abs(q1 - q2) + Math.abs(r1 - r2) + Math.abs(q1 + r1 - q2 - r2)) / 2
 

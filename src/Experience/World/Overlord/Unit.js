@@ -47,6 +47,38 @@ export default class Unit {
     return new THREE.Vector3(...position).sub(this.origins.get(joint)).toArray()
   }
 
+  // Turns `joint` so a direction of its unrotated pose (model space, e.g. toward the next joint) points along
+  // `target` (model space), its parents' current rotations included. For posing a stance in the constructor,
+  // while the unit's group has no transform of its own.
+  aim(joint, rest, target) {
+    this.group.updateMatrixWorld(true)
+    const parent = joint.parent.getWorldQuaternion(new THREE.Quaternion())
+    const current = rest.clone().normalize().applyQuaternion(parent)
+    const turn = new THREE.Quaternion().setFromUnitVectors(current, target.clone().normalize())
+    joint.quaternion.copy(parent.clone().invert().multiply(turn).multiply(parent))
+  }
+
+  // Two-bone reach: bends shoulder -> elbow -> hand so the hand lands on `target` (model space), the elbow
+  // pushed toward `pole`. Distances are taken from the modeled (unrotated) arm.
+  reach(shoulder, elbow, hand, target, pole) {
+    const origin = (joint) => this.origins.get(joint)
+    const upper = origin(elbow).clone().sub(origin(shoulder))
+    const fore = origin(hand).clone().sub(origin(elbow))
+    this.group.updateMatrixWorld(true)
+    const start = shoulder.getWorldPosition(new THREE.Vector3())
+    const toTarget = target.clone().sub(start)
+    const a = upper.length()
+    const b = fore.length()
+    const d = Math.min(toTarget.length(), (a + b) * 0.995)
+    const u = toTarget.normalize()
+    const v = pole.clone().sub(u.clone().multiplyScalar(pole.dot(u))).normalize()
+    const angle = Math.acos(THREE.MathUtils.clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1))
+    const bend = start.clone().add(u.clone().multiplyScalar(Math.cos(angle) * a)).add(v.multiplyScalar(Math.sin(angle) * a))
+    this.aim(shoulder, upper, bend.clone().sub(start))
+    this.group.updateMatrixWorld(true)
+    this.aim(elbow, fore, start.add(u.multiplyScalar(d)).sub(bend))
+  }
+
   // Adds a mesh with an ink hull (scale `outline`, a number or [x, y, z]) to `parent`
   add(geometry, material, parent, { position = [0, 0, 0], rotation = [0, 0, 0], outline = 1.06 } = {}) {
     const mesh = new THREE.Mesh(geometry, material)

@@ -11,6 +11,7 @@ import OverlordZone from './Overlord/OverlordZone.js'
 import MeleeMinion from './Overlord/MeleeMinion.js'
 import RangedMinion from './Overlord/RangedMinion.js'
 import Juggernaut from './Overlord/Juggernaut.js'
+import Archer from './Overlord/Archer.js'
 import Interactions from './Interactions.js'
 import projects from '../projects.js'
 import PalmTrees from './Decor/PalmTrees.js'
@@ -60,6 +61,7 @@ export default class World {
       this.overlord.showUnit(new MeleeMinion(), 0)
       this.overlord.showUnit(new RangedMinion(), 1)
       this.overlord.showUnit(new Juggernaut(), 2)
+      this.overlord.showUnit(new Archer(), 3)
 
       this.airstrip = new Airstrip({ island: islands.entrepreneur, destination: islands.city })
       this.setDecor()
