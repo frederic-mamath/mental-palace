@@ -13,6 +13,9 @@ import { createGradientMap, createOutlineMaterial } from '../toon.js'
 //     ├ neck → the head
 //     ├ shoulder_R → elbow_R → hand_R → the right hand's weapon
 //     └ shoulder_L → elbow_L → hand_L → the left hand's weapon (or nothing)
+//   hip_R / hip_L → knee → foot  units with legs (from the root, so the waist turns on its own)
+//
+// A unit may add its own named nodes (a pilot, levers, a crystal to make glow); see each unit's header.
 //
 // Local axes: facing +z, y up, 1 unit = 1 m; the unit's right hand is on -x. Joints are placed in model
 // space (`joint`); a part added to a joint is positioned with `local(joint, modelPosition)`.
