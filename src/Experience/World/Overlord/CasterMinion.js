@@ -28,9 +28,9 @@ const runePoints = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.3], [0.1, 0.3], [0.1, 0.1
 // own. The parts are modeled arms down; `setStance` poses the arms, so the .glb's rest pose is the casting
 // one. `update(elapsed)` plays a slow idle: breathing, the head looking around, the casting hand pulsing, the
 // crystal turning.
-export default class RangedMinion extends Unit {
+export default class CasterMinion extends Unit {
   constructor() {
-    super('RangedMinion', colors)
+    super('CasterMinion', colors)
 
     this.waist = this.joint('waist', this.group, [0, 0.88, 0])
     this.neck = this.joint('neck', this.waist, [0, 1.46, 0.03])

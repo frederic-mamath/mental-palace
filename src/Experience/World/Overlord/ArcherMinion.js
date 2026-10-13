@@ -25,9 +25,9 @@ const colors = {
 // of it (it stands behind the juggernaut). The bow is a group under hand_L, the nocked arrow and the drawn
 // string are in it. `update(elapsed)` plays a slow idle: breathing, holding the aim (a slight tremble), the
 // scarf tail fluttering.
-export default class Archer extends Unit {
+export default class ArcherMinion extends Unit {
   constructor() {
-    super('Archer', colors)
+    super('ArcherMinion', colors)
     this.materials.glow = new THREE.MeshBasicMaterial({ name: 'glow', color: '#bff4ff' })
 
     this.waist = this.joint('waist', this.group, [0, 1.0, 0])
